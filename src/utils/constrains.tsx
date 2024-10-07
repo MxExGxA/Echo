@@ -7,6 +7,7 @@ const pcConfig = {
       urls: "stun:stun1.l.google.com:19302",
     },
   ],
+  sdpSemantics: "unified-plan",
 };
 
 export { pcConfig };
