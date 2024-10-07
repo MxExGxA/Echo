@@ -20,9 +20,7 @@ const Message = ({
   useEffect(() => {
     if (message.type === "file") {
       const pathFromMessage = message.message.split("::")[1];
-      setLink(
-        `http://${import.meta.env.VITE_PUBLIC_SERVER}/file/${pathFromMessage}`
-      );
+      setLink(`${import.meta.env.VITE_PUBLIC_SERVER}/file/${pathFromMessage}`);
     }
   }, []);
 
