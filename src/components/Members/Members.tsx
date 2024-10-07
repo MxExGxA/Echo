@@ -32,8 +32,8 @@ const Members = ({ echoUtils }: { echoUtils: EchoUtils }) => {
   };
 
   const handleCopyInvitationLink = async () => {
-    const inviteLink = `${import.meta.env.VITE_PUBLIC_HOSTNAME}:${
-      import.meta.env.VITE_PUBLIC_PORT
+    const inviteLink = `${
+      import.meta.env.VITE_PUBLIC_HOSTNAME
     }/echo/join?invitation=${echoUtils.echoID}`;
     try {
       window.navigator.clipboard.writeText(inviteLink);
