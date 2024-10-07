@@ -21,7 +21,9 @@ const Message = ({
     if (message.type === "file") {
       const pathFromMessage = message.message.split("::")[1];
       setLink(
-        `http://${import.meta.env.VITE_PUBLIC_SERVER}/file/${pathFromMessage}`
+        `http://${import.meta.env.VITE_PUBLIC_SERVER}:${
+          import.meta.env.VITE_PUBLIC_SERVER_PORT
+        }/file/${pathFromMessage}`
       );
     }
   }, []);
