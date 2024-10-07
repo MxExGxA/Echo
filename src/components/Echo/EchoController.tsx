@@ -47,7 +47,11 @@ const EchoController = () => {
   const params = useParams();
 
   useEffect(() => {
-    const socket = io("localhost:3001");
+    const socket = io(
+      `${import.meta.env.VITE_PUBLIC_SERVER}:${
+        import.meta.env.VITE_PUBLIC_SERVER_PORT
+      }`
+    );
 
     socket.on("connect", () => {
       const echoUtils = new EchoUtils(socket);
