@@ -12,6 +12,8 @@ const pcConfig = {
     { urls: "stun:stun4.l.google.com:5349" },
   ],
   sdpSemantics: "plan-b",
+  bundlePolicy: "max-compat",
+  rtcpMuxPolicy: "negotiate",
 };
 
 export { pcConfig };
