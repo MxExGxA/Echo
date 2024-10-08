@@ -149,20 +149,16 @@ const Call = ({
 
       if (opts.type === "offer") {
         try {
-          if (pc.signalingState !== "have-remote-offer") {
-            await pc.setRemoteDescription(
-              new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
-            );
-          }
+          await pc.setRemoteDescription(
+            new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
+          );
         } catch (err) {
           console.error(err);
         }
 
         const answer = await pc.createAnswer();
         try {
-          if (pc.signalingState !== "have-local-pranswer") {
-            await pc.setLocalDescription(new RTCSessionDescription(answer));
-          }
+          await pc.setLocalDescription(new RTCSessionDescription(answer));
         } catch (err) {
           console.error(err);
         }
