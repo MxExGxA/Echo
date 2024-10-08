@@ -86,9 +86,7 @@ const LocalStream = ({
             try {
               const videoTrack = stream?.getVideoTracks()[0];
               if (videoTrack) {
-                peers[peer].addTransceiver(videoTrack, {
-                  direction: "sendonly",
-                });
+                peers[peer].addTrack(videoTrack);
               }
             } catch (err) {
               throw new Error(
@@ -102,9 +100,7 @@ const LocalStream = ({
             try {
               const audioTrack = stream?.getAudioTracks()[0];
               if (audioTrack) {
-                peers[peer].addTransceiver(audioTrack, {
-                  direction: "sendonly",
-                });
+                peers[peer].addTrack(audioTrack);
               }
             } catch (err) {
               throw new Error(
@@ -127,9 +123,7 @@ const LocalStream = ({
                   .getSenders()
                   .find((sender) => sender.track === screenTrack)
               ) {
-                peers[peer].addTransceiver(screenTrack, {
-                  direction: "sendonly",
-                });
+                peers[peer].addTrack(screenTrack);
               }
             } catch (err) {
               console.log(err);
