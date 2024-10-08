@@ -162,7 +162,7 @@ const CallControls = ({
         ? emitMedia("screen", true, screenTrackId)
         : emitMedia("screen", false);
     }
-  }, [toggleShareScreen, screenShareTrack]);
+  }, [toggleShareScreen, screenShareTrack.current]);
 
   useEffect(() => {
     cameraPermission && cameraQuery

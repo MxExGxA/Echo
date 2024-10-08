@@ -222,7 +222,6 @@ const Call = ({
 
       peers.current = {};
       setConnectionPeers({});
-      setLocalStream(null);
       listenerMap.current.clear();
 
       echoUtils.echoSocket.off("memberJoined");
@@ -274,11 +273,11 @@ const Call = ({
 
   useEffect(() => {
     return () => {
-      if (localStream) {
-        localStream?.getTracks().forEach((t) => {
-          t.stop();
-        });
-      }
+      console.log("Closing stream in call component");
+
+      localStream?.getTracks().forEach((t) => {
+        t.stop();
+      });
     };
   }, [localStream]);
 

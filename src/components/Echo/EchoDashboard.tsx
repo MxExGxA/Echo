@@ -15,9 +15,9 @@ const EchoDashboard = ({ echoUtils }: { echoUtils: EchoUtils }) => {
   );
 
   useEffect(() => {
-    echoUtils.echoSocket.on("disconnect", () => {
-      navigate("/", { replace: true });
-    });
+    // echoUtils.echoSocket.on("disconnect", () => {
+    //   navigate("/kicked");
+    // });
   }, []);
 
   return (

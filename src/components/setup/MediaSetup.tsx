@@ -87,7 +87,9 @@ const MediaSetup = ({
       }
     }
 
-    return () => localStream?.getTracks().forEach((track) => track.stop());
+    return () => {
+      localStream?.getTracks().forEach((track) => track.stop());
+    };
   }, [localStream, videoRef.current]);
 
   useEffect(() => {
