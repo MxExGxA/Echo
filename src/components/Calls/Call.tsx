@@ -110,6 +110,7 @@ const Call = ({
     //webrtc call process
     echoUtils.echoSocket.on("memberJoined", async (opts) => {
       const pc = new RTCPeerConnection(pcConfig);
+
       peers.current[opts.member.id] = pc;
       setConnectionPeers((prev) => ({ ...prev, [opts.member.id]: pc }));
 
@@ -148,16 +149,20 @@ const Call = ({
 
       if (opts.type === "offer") {
         try {
-          await pc.setRemoteDescription(
-            new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
-          );
+          if (pc.signalingState !== "have-remote-offer") {
+            await pc.setRemoteDescription(
+              new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
+            );
+          }
         } catch (err) {
           console.error(err);
         }
 
         const answer = await pc.createAnswer();
         try {
-          await pc.setLocalDescription(new RTCSessionDescription(answer));
+          if (pc.signalingState !== "have-local-pranswer") {
+            await pc.setLocalDescription(new RTCSessionDescription(answer));
+          }
         } catch (err) {
           console.error(err);
         }
