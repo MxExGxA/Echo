@@ -90,18 +90,18 @@ const Call = ({
       const videoTrack = results[0];
       const audioTrack = results[1];
 
-      if (audioTrack.status === "fulfilled") {
-        localMediaStream.addTrack(audioTrack.value);
-        setMicPermission(true);
-      } else {
-        console.log("no mic permissions");
-      }
-
       if (videoTrack.status === "fulfilled") {
         localMediaStream.addTrack(videoTrack.value);
         setCameraPermission(true);
       } else {
         console.log("no camera permissions");
+      }
+
+      if (audioTrack.status === "fulfilled") {
+        localMediaStream.addTrack(audioTrack.value);
+        setMicPermission(true);
+      } else {
+        console.log("no mic permissions");
       }
 
       setLocalStream(localMediaStream);

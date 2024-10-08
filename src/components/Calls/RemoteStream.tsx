@@ -81,16 +81,16 @@ const RemoteStream = ({
       peer.ontrack = (event: RTCTrackEvent) => {
         console.log("new track", event);
 
-        if (event.track.kind === "audio") {
-          const audioStream = new MediaStream([event.track]);
-          setAudio(audioStream);
-          audioRef.current!.srcObject = audioStream;
-        }
-
         if (event.track.kind === "video") {
           if (!videoTrackList.some((track) => track.id === event.track.id)) {
             setVideoTrackList((prev) => [...prev, event.track]);
           }
+        }
+
+        if (event.track.kind === "audio") {
+          const audioStream = new MediaStream([event.track]);
+          setAudio(audioStream);
+          audioRef.current!.srcObject = audioStream;
         }
       };
 

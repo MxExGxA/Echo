@@ -43,15 +43,15 @@ const LocalStream = ({
         };
       }
 
+      if (videoTrack) {
+        const newStream = new MediaStream([videoTrack as MediaStreamTrack]);
+        videoRef.current!.srcObject = newStream;
+      }
+
       if (audioTrack) {
         const audioStream = new MediaStream();
         audioStream.addTrack(audioTrack);
         setAudio(audioStream);
-      }
-
-      if (videoTrack) {
-        const newStream = new MediaStream([videoTrack as MediaStreamTrack]);
-        videoRef.current!.srcObject = newStream;
       }
 
       console.log("stream", stream);
@@ -88,7 +88,6 @@ const LocalStream = ({
               if (videoTrack) {
                 peers[peer].addTransceiver(videoTrack, {
                   direction: "sendonly",
-                  streams: [stream],
                 });
               }
             } catch (err) {
@@ -105,7 +104,6 @@ const LocalStream = ({
               if (audioTrack) {
                 peers[peer].addTransceiver(audioTrack, {
                   direction: "sendonly",
-                  streams: [stream],
                 });
               }
             } catch (err) {
@@ -131,7 +129,6 @@ const LocalStream = ({
               ) {
                 peers[peer].addTransceiver(screenTrack, {
                   direction: "sendonly",
-                  streams: [stream],
                 });
               }
             } catch (err) {
