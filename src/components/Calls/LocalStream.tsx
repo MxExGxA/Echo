@@ -76,11 +76,6 @@ const LocalStream = ({
             .getSenders()
             .find((sender) => sender.track?.kind === "video");
 
-          //check if this peer has audio track on it
-          const hasAudio = peers[peer]
-            .getSenders()
-            .find((sender) => sender.track?.kind === "audio");
-
           //if it has no  video track, add our localstream video track to it
           if (!hasVideo) {
             try {
@@ -96,6 +91,11 @@ const LocalStream = ({
               );
             }
           }
+
+          //check if this peer has audio track on it
+          const hasAudio = peers[peer]
+            .getSenders()
+            .find((sender) => sender.track?.kind === "audio");
 
           //if it has no  audio track, add our localstream audio track to it
           if (!hasAudio) {
