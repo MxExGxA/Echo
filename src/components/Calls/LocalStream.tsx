@@ -72,25 +72,25 @@ const LocalStream = ({
       Object.keys(peers).forEach((peer) => {
         if (stream) {
           //check if this peer has video track on it
-          const hasVideo = peers[peer]
-            .getSenders()
-            .find((sender) => sender.track?.kind === "video");
+          // const hasVideo = peers[peer]
+          //   .getSenders()
+          //   .find((sender) => sender.track?.kind === "video");
 
-          //if it has no  video track, add our localstream video track to it
-          if (!hasVideo) {
-            try {
-              const videoTrack = stream?.getVideoTracks()[0];
-              if (videoTrack) {
-                peers[peer].addTransceiver(videoTrack, {
-                  direction: "sendrecv",
-                });
-              }
-            } catch (err) {
-              throw new Error(
-                `Error: couldn't add video track to peer ${peers[peer]}`
-              );
-            }
-          }
+          // //if it has no  video track, add our localstream video track to it
+          // if (!hasVideo) {
+          //   try {
+          //     const videoTrack = stream?.getVideoTracks()[0];
+          //     if (videoTrack) {
+          //       peers[peer].addTransceiver(videoTrack, {
+          //         direction: "sendrecv",
+          //       });
+          //     }
+          //   } catch (err) {
+          //     throw new Error(
+          //       `Error: couldn't add video track to peer ${peers[peer]}`
+          //     );
+          //   }
+          // }
 
           // //check if this peer has audio track on it
           // const hasAudio = peers[peer]
