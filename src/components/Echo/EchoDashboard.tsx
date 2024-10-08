@@ -6,10 +6,10 @@ import Messaging from "../Messaging/Messaging";
 import DynamicLayout from "../DynamicLayout/DynamicLayout";
 import Members from "../Members/Members";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 const EchoDashboard = ({ echoUtils }: { echoUtils: EchoUtils }) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const requestsSelector = useSelector(
     (state: stateType) => state.joinReqs.requests
   );
