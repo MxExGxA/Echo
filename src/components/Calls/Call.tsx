@@ -85,10 +85,10 @@ const Call = ({
 
   useEffect(() => {
     //get local stream
-    Promise.allSettled([getLocalAudio(), getLocalVideo()]).then((results) => {
+    Promise.allSettled([getLocalVideo(), getLocalAudio()]).then((results) => {
       const localMediaStream = new MediaStream();
-      const audioTrack = results[0];
-      const videoTrack = results[1];
+      const videoTrack = results[0];
+      const audioTrack = results[1];
 
       if (audioTrack.status === "fulfilled") {
         localMediaStream.addTrack(audioTrack.value);
