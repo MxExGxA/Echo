@@ -169,8 +169,6 @@ const Call = ({
     //handle signals
     echoUtils.echoSocket.on("signal", async (opts) => {
       let pc = peers.current[opts.from] || new RTCPeerConnection(pcConfig);
-      peers.current[opts.from] = pc;
-      setConnectionPeers((prev) => ({ ...prev, [opts.from]: pc }));
 
       if (opts.type === "offer") {
         try {
@@ -213,6 +211,8 @@ const Call = ({
           console.error("Error adding ICE candidate:", error);
         }
       }
+      peers.current[opts.from] = pc;
+      setConnectionPeers((prev) => ({ ...prev, [opts.from]: pc }));
     });
 
     echoUtils.echoSocket.on("memberLeft", (opts) => {
