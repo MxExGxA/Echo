@@ -5,7 +5,6 @@ import { Draggable } from "gsap/Draggable";
 import { EchoUtils } from "@/utils/Utiliteis";
 import CallPlaceholder from "./CallPlaceholder";
 import gsap from "gsap";
-import sdpTransform from "sdp-transform";
 
 const LocalStream = ({
   stream,
@@ -68,77 +67,52 @@ const LocalStream = ({
     }
   }, [membersSelector]);
 
-  const handleNegotiation = async (peer: string) => {
-    const pc = peers[peer];
-    if (pc) {
-      try {
-        const offer = await pc.createOffer();
-        console.log(
-          "created offer sdp:",
-          sdpTransform.parse(offer.sdp as string)
-        );
-
-        await pc.setLocalDescription(new RTCSessionDescription(offer));
-
-        echoUtils.echoSocket.emit("signal", {
-          to: peer,
-          from: echoUtils.echoSocket.id,
-          type: offer.type,
-          sdp: offer.sdp,
-        });
-      } catch (err) {
-        console.log("error while negotation!");
-        console.error(err);
-      }
-    }
-  };
-
   useEffect(() => {
     if (peers) {
       Object.keys(peers).forEach((peer) => {
         if (stream) {
           console.log(peers);
           //check if this peer has audio track on it
-          const hasAudio = peers[peer]
-            .getSenders()
-            .find((sender) => sender.track?.kind === "audio");
-          // if it has no  audio track, add our localstream audio track to it
-          if (!hasAudio) {
-            try {
-              const audioTrack = stream?.getAudioTracks()[0];
-              if (audioTrack) {
-                peers[peer].addTransceiver(audioTrack, {
-                  direction: "sendonly",
-                });
-              }
-            } catch (err) {
-              throw new Error(
-                `Error: couldn't add audio track to peer ${peers[peer]}`
-              );
-            }
-          }
-          // // check if this peer has video track on it
-          const hasVideo = peers[peer]
-            .getSenders()
-            .find((sender) => sender.track?.kind === "video");
-          console.log("video sender:", hasVideo);
-          //if it has no  video track, add our localstream video track to it
-          if (!hasVideo) {
-            try {
-              console.log("adding video transceiver");
-              const videoTrack = stream?.getVideoTracks()[0];
-              if (videoTrack) {
-                peers[peer].addTransceiver(videoTrack, {
-                  direction: "sendrecv",
-                });
-              }
-            } catch (err) {
-              throw new Error(
-                `Error: couldn't add video track to peer ${peers[peer]}`
-              );
-            }
-          }
-          //if local screen shared
+          // const hasAudio = peers[peer]
+          //   .getSenders()
+          //   .find((sender) => sender.track?.kind === "audio");
+          // // if it has no  audio track, add our localstream audio track to it
+          // if (!hasAudio) {
+          //   try {
+          //     const audioTrack = stream?.getAudioTracks()[0];
+          //     if (audioTrack) {
+          //       peers[peer].addTransceiver(audioTrack, {
+          //         direction: "sendonly",
+          //       });
+          //     }
+          //   } catch (err) {
+          //     throw new Error(
+          //       `Error: couldn't add audio track to peer ${peers[peer]}`
+          //     );
+          //   }
+          // }
+          // // // check if this peer has video track on it
+          // const hasVideo = peers[peer]
+          //   .getSenders()
+          //   .find((sender) => sender.track?.kind === "video");
+          // console.log("video sender:", hasVideo);
+          // //if it has no  video track, add our localstream video track to it
+          // if (!hasVideo) {
+          //   try {
+          //     console.log("adding video transceiver");
+          //     const videoTrack = stream?.getVideoTracks()[0];
+          //     if (videoTrack) {
+          //       peers[peer].addTransceiver(videoTrack, {
+          //         direction: "sendonly",
+          //       });
+          //     }
+          //   } catch (err) {
+          //     throw new Error(
+          //       `Error: couldn't add video track to peer ${peers[peer]}`
+          //     );
+          //   }
+          // }
+          // //if local screen shared
           if (localScreenShared) {
             try {
               const screenTrack = stream
@@ -163,7 +137,7 @@ const LocalStream = ({
             }
           }
 
-          handleNegotiation(peer);
+          // handleNegotiation(peer);
         }
       });
     }
