@@ -69,7 +69,6 @@ const Messaging = ({ echoUtils }: { echoUtils: EchoUtils }) => {
 
   const handleEnterKey = (e: KeyboardEvent) => {
     if (e.code === "Enter" || e.code === "NumpadEnter") {
-      console.log("triggereed");
       e.preventDefault();
       if (toggleMessages && messageVal.trim()) {
         handleSendMessage();
@@ -117,9 +116,6 @@ const Messaging = ({ echoUtils }: { echoUtils: EchoUtils }) => {
 
   useEffect(() => {
     messagesinputRef.current?.addEventListener("keypress", handleEnterKey);
-    messagesinputRef.current!.scrollLeft = messagesinputRef.current
-      ?.scrollWidth as number;
-
     return () =>
       messagesinputRef.current?.removeEventListener("keypress", handleEnterKey);
   }, [messageVal]);
@@ -127,13 +123,12 @@ const Messaging = ({ echoUtils }: { echoUtils: EchoUtils }) => {
   useEffect(() => {
     if (toggleMessages) {
       setUnread(false);
-      setTimeout(() => {
-        messagesinputRef.current?.focus();
-      }, 300);
+      messagesinputRef.current?.focus();
     }
   }, [toggleMessages]);
 
   useEffect(() => {
+    //scroll down on new message
     messagesBodyRef.current?.scroll({
       top: messagesBodyRef.current.scrollHeight,
     });
@@ -145,10 +140,6 @@ const Messaging = ({ echoUtils }: { echoUtils: EchoUtils }) => {
       setUnread(true);
     }
   }, [messagesSelector]);
-
-  useEffect(() => {
-    console.log(echoUtils.adminID);
-  }, []);
 
   return (
     <>

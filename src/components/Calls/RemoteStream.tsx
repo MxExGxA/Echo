@@ -122,12 +122,6 @@ const RemoteStream = ({
     }
   }, [toggleAudio]);
 
-  useEffect(() => {
-    if (audio?.getAudioTracks().length) {
-      audioRef.current?.play();
-    }
-  }, [audio, audioRef.current]);
-
   return (
     <div
       className={`remoteContainer${id} relative grid-item overflow-hidden ${className}`}

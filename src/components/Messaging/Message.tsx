@@ -24,9 +24,6 @@ const Message = ({
     }
   }, []);
 
-  useEffect(() => {
-    console.log(link);
-  }, [link]);
   return (
     <li className={`text-sm py-1`}>
       <span

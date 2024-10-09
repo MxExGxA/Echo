@@ -21,6 +21,7 @@ const Call = ({
   gsap.registerPlugin(Draggable);
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const localStreamRef = useRef<MediaStream>();
   const peers = useRef<{ [key: string]: RTCPeerConnection }>({});
   const [connectionPeers, setConnectionPeers] = useState<{
     [key: string]: RTCPeerConnection;
@@ -105,6 +106,7 @@ const Call = ({
       }
 
       setLocalStream(localMediaStream);
+      localStreamRef.current = localMediaStream;
     });
 
     //webrtc call process
@@ -232,6 +234,10 @@ const Call = ({
 
       dispatch(clearMembers());
       dispatch(clearMessages());
+
+      localStreamRef.current?.getTracks().forEach((t) => {
+        t.stop();
+      });
     };
   }, []);
 
@@ -271,16 +277,6 @@ const Call = ({
         }
       });
   }, [connectionPeers]);
-
-  useEffect(() => {
-    return () => {
-      console.log("Closing stream in call component");
-
-      localStream?.getTracks().forEach((t) => {
-        t.stop();
-      });
-    };
-  }, [localStream]);
 
   return (
     <div
