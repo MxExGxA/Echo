@@ -10,6 +10,7 @@ import CallControls from "./CallControls";
 import LocalStream from "./LocalStream";
 import RemoteStream from "./RemoteStream";
 import gsap from "gsap";
+import sdpTransform from "sdp-transform";
 
 const Call = ({
   editorToggled,
@@ -50,12 +51,18 @@ const Call = ({
 
   //on peer negotiation needed event
   const handleNegotiation = async (e: Event, peer: string) => {
-    console.log("negotiation needed!", e.currentTarget);
-    const pc = e.currentTarget as RTCPeerConnection;
+    console.log("negotiation needed for peer ", peer, e.currentTarget);
+    const pc = peers.current[peer];
     if (pc) {
       try {
         const offer = await pc.createOffer();
-        await pc.setLocalDescription(new RTCSessionDescription(offer));
+        console.log(
+          "created offer sdp:",
+          sdpTransform.parse(offer.sdp as string)
+        );
+        if (pc.localDescription) {
+          await pc.setLocalDescription(new RTCSessionDescription(offer));
+        }
         echoUtils.echoSocket.emit("signal", {
           to: peer,
           from: echoUtils.echoSocket.id,
@@ -63,40 +70,45 @@ const Call = ({
           sdp: offer.sdp,
         });
       } catch (err) {
-        console.log("error while negotation!", err);
+        console.log("error while negotation!");
+        console.error(err);
       }
     }
   };
 
-  // const renegotiate = async (peer: string) => {
-  //   const pc = peers.current[peer];
-  //   if (pc) {
-  //     const offer = await pc.createOffer();
-  //     await pc.setLocalDescription(new RTCSessionDescription(offer));
-  //     echoUtils.echoSocket.emit("signal", {
-  //       to: peer,
-  //       from: echoUtils.echoSocket.id,
-  //       type: offer.type,
-  //       sdp: offer.sdp,
-  //     });
-  //   } else {
-  //     console.log("peer is not found");
+  // const addLocalTracks = (pc: RTCPeerConnection, stream: MediaStream) => {
+  //   const audioTrack = stream.getAudioTracks()[0];
+  //   const videoTrack = stream.getVideoTracks()[0];
+
+  //   const hasAudio = pc
+  //     .getSenders()
+  //     .find((sender) => sender.track?.kind === "audio");
+
+  //   // Add audio tracks first
+  //   if (!hasAudio) {
+  //     console.log("adding audio to peer connection");
+  //     pc.addTrack(audioTrack, stream);
   //   }
+
+  //   const hasVideo = pc
+  //     .getSenders()
+  //     .find((sender) => sender.track?.kind === "video");
+
+  //   // Add video tracks next
+  //   if (!hasVideo) {
+  //     console.log("adding video to peer connection");
+  //     pc.addTrack(videoTrack, stream);
+  //   }
+
+  //   console.log("2- added the tracks to peer");
   // };
 
   useEffect(() => {
     //get local stream
-    Promise.allSettled([getLocalVideo(), getLocalAudio()]).then((results) => {
+    Promise.allSettled([getLocalAudio(), getLocalVideo()]).then((results) => {
       const localMediaStream = new MediaStream();
-      const videoTrack = results[0];
-      const audioTrack = results[1];
-
-      if (videoTrack.status === "fulfilled") {
-        localMediaStream.addTrack(videoTrack.value);
-        setCameraPermission(true);
-      } else {
-        console.log("no camera permissions");
-      }
+      const audioTrack = results[0];
+      const videoTrack = results[1];
 
       if (audioTrack.status === "fulfilled") {
         localMediaStream.addTrack(audioTrack.value);
@@ -105,13 +117,23 @@ const Call = ({
         console.log("no mic permissions");
       }
 
+      if (videoTrack.status === "fulfilled") {
+        localMediaStream.addTrack(videoTrack.value);
+        setCameraPermission(true);
+      } else {
+        console.log("no camera permissions");
+      }
+
       setLocalStream(localMediaStream);
       localStreamRef.current = localMediaStream;
+
+      console.log("1- got the localstream", localStreamRef.current.getTracks());
     });
 
     //webrtc call process
     echoUtils.echoSocket.on("memberJoined", async (opts) => {
       const pc = new RTCPeerConnection(pcConfig);
+      // addLocalTracks(pc, localStreamRef.current as MediaStream);
 
       peers.current[opts.member.id] = pc;
       setConnectionPeers((prev) => ({ ...prev, [opts.member.id]: pc }));
@@ -206,7 +228,7 @@ const Call = ({
     });
 
     return () => {
-      //close all peer connections
+      //closing peers connections, turnoff socket events, cleaning states
       console.log("cleaning");
 
       Object.keys(connectionPeers).forEach((peer) => {

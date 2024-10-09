@@ -11,7 +11,6 @@ const pcConfig = {
     { urls: "stun:stun4.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:5349" },
   ],
-  sdpSemantics: "plan-b",
 };
 
 export { pcConfig };
