@@ -5,6 +5,7 @@ import { Draggable } from "gsap/Draggable";
 import { EchoUtils } from "@/utils/Utiliteis";
 import CallPlaceholder from "./CallPlaceholder";
 import gsap from "gsap";
+import sdpTransform from "sdp-transform";
 
 const LocalStream = ({
   stream,
@@ -66,6 +67,31 @@ const LocalStream = ({
       setMemberName(member.name);
     }
   }, [membersSelector]);
+
+  const handleNegotiation = async (peer: string) => {
+    const pc = peers[peer];
+    if (pc) {
+      try {
+        const offer = await pc.createOffer();
+        console.log(
+          "created offer sdp:",
+          sdpTransform.parse(offer.sdp as string)
+        );
+
+        await pc.setLocalDescription(new RTCSessionDescription(offer));
+
+        echoUtils.echoSocket.emit("signal", {
+          to: peer,
+          from: echoUtils.echoSocket.id,
+          type: offer.type,
+          sdp: offer.sdp,
+        });
+      } catch (err) {
+        console.log("error while negotation!");
+        console.error(err);
+      }
+    }
+  };
 
   useEffect(() => {
     if (peers) {
@@ -136,6 +162,8 @@ const LocalStream = ({
               );
             }
           }
+
+          handleNegotiation(peer);
         }
       });
     }

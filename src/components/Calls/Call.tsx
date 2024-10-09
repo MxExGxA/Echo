@@ -50,31 +50,31 @@ const Call = ({
   };
 
   //on peer negotiation needed event
-  const handleNegotiation = async (e: Event, peer: string) => {
-    console.log("negotiation needed for peer ", peer, e);
-    const pc = peers.current[peer];
-    if (pc) {
-      try {
-        const offer = await pc.createOffer();
-        console.log(
-          "created offer sdp:",
-          sdpTransform.parse(offer.sdp as string)
-        );
+  // const handleNegotiation = async (e: Event, peer: string) => {
+  //   console.log("negotiation needed for peer ", peer, e);
+  //   const pc = peers.current[peer];
+  //   if (pc) {
+  //     try {
+  //       const offer = await pc.createOffer();
+  //       console.log(
+  //         "created offer sdp:",
+  //         sdpTransform.parse(offer.sdp as string)
+  //       );
 
-        await pc.setLocalDescription(new RTCSessionDescription(offer));
+  //       await pc.setLocalDescription(new RTCSessionDescription(offer));
 
-        echoUtils.echoSocket.emit("signal", {
-          to: peer,
-          from: echoUtils.echoSocket.id,
-          type: offer.type,
-          sdp: offer.sdp,
-        });
-      } catch (err) {
-        console.log("error while negotation!");
-        console.error(err);
-      }
-    }
-  };
+  //       echoUtils.echoSocket.emit("signal", {
+  //         to: peer,
+  //         from: echoUtils.echoSocket.id,
+  //         type: offer.type,
+  //         sdp: offer.sdp,
+  //       });
+  //     } catch (err) {
+  //       console.log("error while negotation!");
+  //       console.error(err);
+  //     }
+  //   }
+  // };
 
   useEffect(() => {
     //get local stream
@@ -246,8 +246,8 @@ const Call = ({
     Object.keys(connectionPeers).forEach((peer) => {
       if (!listenerMap.current.has(peer)) {
         //create a listener function
-        const negotiationListener = (e: Event) => {
-          handleNegotiation(e, peer);
+        const negotiationListener = () => {
+          // handleNegotiation(e, peer);
         };
 
         //store the listener function inside map to remove it later
