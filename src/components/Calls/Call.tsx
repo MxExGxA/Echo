@@ -51,7 +51,6 @@ const Call = ({
 
   //on peer negotiation needed event
   const handleNegotiation = async (e: Event, peer: string) => {
-    e.preventDefault();
     console.log("negotiation needed for peer ", peer, e);
     const pc = peers.current[peer];
     if (pc) {
@@ -61,9 +60,9 @@ const Call = ({
           "created offer sdp:",
           sdpTransform.parse(offer.sdp as string)
         );
-        if (pc.localDescription) {
-          await pc.setLocalDescription(new RTCSessionDescription(offer));
-        }
+
+        await pc.setLocalDescription(new RTCSessionDescription(offer));
+
         echoUtils.echoSocket.emit("signal", {
           to: peer,
           from: echoUtils.echoSocket.id,
@@ -76,33 +75,6 @@ const Call = ({
       }
     }
   };
-
-  // const addLocalTracks = (pc: RTCPeerConnection, stream: MediaStream) => {
-  //   const audioTrack = stream.getAudioTracks()[0];
-  //   const videoTrack = stream.getVideoTracks()[0];
-
-  //   const hasAudio = pc
-  //     .getSenders()
-  //     .find((sender) => sender.track?.kind === "audio");
-
-  //   // Add audio tracks first
-  //   if (!hasAudio) {
-  //     console.log("adding audio to peer connection");
-  //     pc.addTrack(audioTrack, stream);
-  //   }
-
-  //   const hasVideo = pc
-  //     .getSenders()
-  //     .find((sender) => sender.track?.kind === "video");
-
-  //   // Add video tracks next
-  //   if (!hasVideo) {
-  //     console.log("adding video to peer connection");
-  //     pc.addTrack(videoTrack, stream);
-  //   }
-
-  //   console.log("2- added the tracks to peer");
-  // };
 
   useEffect(() => {
     //get local stream
@@ -134,10 +106,13 @@ const Call = ({
     //webrtc call process
     echoUtils.echoSocket.on("memberJoined", async (opts) => {
       const pc = new RTCPeerConnection(pcConfig);
-      // addLocalTracks(pc, localStreamRef.current as MediaStream);
 
       //initiate call
       const offer = await pc.createOffer();
+      console.log(
+        "created offer sdp:",
+        sdpTransform.parse(offer.sdp as string)
+      );
       try {
         await pc.setLocalDescription(new RTCSessionDescription(offer));
       } catch (err) {
@@ -168,7 +143,12 @@ const Call = ({
 
     //handle signals
     echoUtils.echoSocket.on("signal", async (opts) => {
-      let pc = peers.current[opts.from] || new RTCPeerConnection(pcConfig);
+      let pc = peers.current[opts.from];
+      if (!pc) {
+        pc = new RTCPeerConnection(pcConfig);
+        peers.current[opts.from] = pc;
+        setConnectionPeers((prev) => ({ ...prev, [opts.from]: pc }));
+      }
 
       if (opts.type === "offer") {
         try {
@@ -211,8 +191,6 @@ const Call = ({
           console.error("Error adding ICE candidate:", error);
         }
       }
-      peers.current[opts.from] = pc;
-      setConnectionPeers((prev) => ({ ...prev, [opts.from]: pc }));
     });
 
     echoUtils.echoSocket.on("memberLeft", (opts) => {
@@ -321,7 +299,7 @@ const Call = ({
       >
         <LocalStream
           echoUtils={echoUtils}
-          stream={localStream as MediaStream}
+          stream={localStreamRef.current as MediaStream}
           peers={connectionPeers}
         />
         {Object.keys(connectionPeers).map((p, index) => (

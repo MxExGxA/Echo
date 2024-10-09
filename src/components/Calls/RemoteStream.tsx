@@ -37,8 +37,6 @@ const RemoteStream = ({
     mediaSelector.forEach((media) => {
       if (Object.entries(media)[0][0] === id) {
         const mediaConf = Object.entries(media)[0][1];
-        console.log(Object.entries(media)[0]);
-
         setToggleVideo(mediaConf.camera.toggle);
         setToggleAudio(mediaConf.mic.toggle);
         setRemoteScreenShared(mediaConf.screen.toggle);
