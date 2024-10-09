@@ -136,9 +136,6 @@ const Call = ({
       const pc = new RTCPeerConnection(pcConfig);
       // addLocalTracks(pc, localStreamRef.current as MediaStream);
 
-      peers.current[opts.member.id] = pc;
-      setConnectionPeers((prev) => ({ ...prev, [opts.member.id]: pc }));
-
       //initiate call
       const offer = await pc.createOffer();
       try {
@@ -164,6 +161,9 @@ const Call = ({
         }
       };
       console.log("calling:", opts.member.id);
+
+      peers.current[opts.member.id] = pc;
+      setConnectionPeers((prev) => ({ ...prev, [opts.member.id]: pc }));
     });
 
     //handle signals
