@@ -101,6 +101,8 @@ const LocalStream = ({
           //if it has no  video track, add our localstream video track to it
           if (!hasVideo) {
             try {
+              console.log("adding video transceiver");
+
               const videoTrack = stream?.getVideoTracks()[0];
               if (videoTrack) {
                 peers[peer].addTransceiver(videoTrack, {
