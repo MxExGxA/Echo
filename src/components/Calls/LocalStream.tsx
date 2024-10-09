@@ -96,6 +96,7 @@ const LocalStream = ({
           const hasVideo = peers[peer]
             .getSenders()
             .find((sender) => sender.track?.kind === "video");
+          console.log("video sender:", hasVideo);
 
           //if it has no  video track, add our localstream video track to it
           if (!hasVideo) {

@@ -51,7 +51,8 @@ const Call = ({
 
   //on peer negotiation needed event
   const handleNegotiation = async (e: Event, peer: string) => {
-    console.log("negotiation needed for peer ", peer, e.currentTarget);
+    e.preventDefault();
+    console.log("negotiation needed for peer ", peer, e);
     const pc = peers.current[peer];
     if (pc) {
       try {
