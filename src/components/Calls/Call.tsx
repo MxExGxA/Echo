@@ -31,6 +31,8 @@ const Call = ({
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
   const listenerMap = useRef(new Map());
 
+  const [connectionState, setConnectionState] = useState<string>();
+
   // const [negotaitionState, setNegotiationState] = useState<{
   //   inProgress: boolean;
   //   shouldNegotiate: boolean;
@@ -55,11 +57,11 @@ const Call = ({
   };
 
   //on peer negotiation needed event
-  const handleNegotiation = async (e: Event, peer: string) => {
-    console.log("negotiation needed for peer ", peer, e);
+  const handleNegotiation = async (peer: string) => {
     const pc = peers.current[peer];
-    // console.log("can renegotiate?", canRenegotiate(pc));
-    console.log("ice state:", pc.connectionState);
+
+    console.log("negotiation for :", peer, "has triggered");
+    console.log(pc);
 
     if (pc) {
       try {
@@ -108,13 +110,6 @@ const Call = ({
   //   );
   // }
 
-  // useEffect(() => {
-  //   echoUtils.echoSocket.emit("negotiation", {
-  //     id: echoUtils.echoSocket.id,
-  //     negotaitionState,
-  //   });
-  // }, [negotaitionState]);
-
   useEffect(() => {
     //get local stream
     Promise.allSettled([getLocalAudio(), getLocalVideo()]).then((results) => {
@@ -140,6 +135,10 @@ const Call = ({
       localStreamRef.current = localMediaStream;
 
       console.log("1- got the localstream", localStreamRef.current.getTracks());
+    });
+
+    echoUtils.echoSocket.on("negotiation", (opts) => {
+      handleNegotiation(opts.peer);
     });
 
     //webrtc call process
@@ -177,21 +176,18 @@ const Call = ({
         }
       };
 
-      // pc.onconnectionstatechange = () => {
-
-      // };
-
       console.log("calling:", opts.member.id);
     });
 
     //handle signals
     echoUtils.echoSocket.on("signal", async (opts) => {
-      let pc = peers.current[opts.from];
-      if (!pc) {
-        pc = new RTCPeerConnection(pcConfig);
-        peers.current[opts.from] = pc;
-        setConnectionPeers((prev) => ({ ...prev, [opts.from]: pc }));
-      }
+      let pc = peers.current[opts.from] || new RTCPeerConnection(pcConfig);
+      peers.current[opts.from] = pc;
+      setConnectionPeers((prev) => ({ ...prev, [opts.from]: pc }));
+
+      pc.onconnectionstatechange = () => {
+        setConnectionState(pc.connectionState);
+      };
 
       if (opts.type === "offer") {
         try {
@@ -219,6 +215,10 @@ const Call = ({
       }
       if (opts.type === "answer") {
         try {
+          console.log(
+            "remote answer sdp:",
+            sdpTransform.parse(opts.sdp as string)
+          );
           await pc.setRemoteDescription(
             new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
           );
@@ -289,8 +289,11 @@ const Call = ({
     Object.keys(connectionPeers).forEach((peer) => {
       if (!listenerMap.current.has(peer)) {
         //create a listener function
-        const negotiationListener = (e: Event) => {
-          handleNegotiation(e, peer);
+        const negotiationListener = () => {
+          echoUtils.echoSocket.emit("negotiation", {
+            id: echoUtils.echoSocket.id,
+            peer,
+          });
         };
 
         //store the listener function inside map to remove it later
@@ -321,6 +324,10 @@ const Call = ({
         }
       });
   }, [connectionPeers]);
+
+  useEffect(() => {
+    console.log(connectionState);
+  }, [connectionState]);
 
   return (
     <div

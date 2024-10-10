@@ -71,39 +71,38 @@ const LocalStream = ({
     if (peers) {
       Object.keys(peers).forEach((peer) => {
         if (stream) {
-          console.log(peers);
           //check if this peer has audio track on it
-          const hasAudio = peers[peer]
-            .getSenders()
-            .find((sender) => sender.track?.kind === "audio");
-          // if it has no  audio track, add our localstream audio track to it
-          if (!hasAudio) {
-            try {
-              const audioTrack = stream?.getAudioTracks()[0];
-              if (audioTrack) {
-                peers[peer].addTransceiver(audioTrack, {
-                  direction: "sendonly",
-                });
-              }
-            } catch (err) {
-              throw new Error(
-                `Error: couldn't add audio track to peer ${peers[peer]}`
-              );
-            }
-          }
+          // const hasAudio = peers[peer]
+          //   .getSenders()
+          //   .find((sender) => sender.track?.kind === "audio");
+          // // if it has no  audio track, add our localstream audio track to it
+          // if (!hasAudio) {
+          //   try {
+          //     const audioTrack = stream?.getAudioTracks()[0];
+          //     if (audioTrack) {
+          //       peers[peer].addTransceiver(audioTrack, {
+          //         direction: "sendrecv",
+          //       });
+          //     }
+          //   } catch (err) {
+          //     throw new Error(
+          //       `Error: couldn't add audio track to peer ${peers[peer]}`
+          //     );
+          //   }
+          // }
           // // check if this peer has video track on it
-          const hasVideo = peers[peer]
-            .getSenders()
-            .find((sender) => sender.track?.kind === "video");
-          console.log("video sender:", hasVideo);
+          const videoTransceiver = peers[peer]
+            .getTransceivers()
+            .find((t) => t.sender.track && t.sender.track.kind === "video");
+
           //if it has no  video track, add our localstream video track to it
-          if (!hasVideo) {
+          if (!videoTransceiver) {
             try {
               console.log("adding video transceiver");
               const videoTrack = stream?.getVideoTracks()[0];
               if (videoTrack) {
                 peers[peer].addTransceiver(videoTrack, {
-                  direction: "sendonly",
+                  direction: "sendrecv",
                 });
               }
             } catch (err) {
