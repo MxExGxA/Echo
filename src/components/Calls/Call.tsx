@@ -29,8 +29,13 @@ const Call = ({
   }>({});
   const [micPermission, setMicPermission] = useState<boolean>(false);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
-
   const listenerMap = useRef(new Map());
+
+  // const [negotaitionState, setNegotiationState] = useState<{
+  //   inProgress: boolean;
+  //   shouldNegotiate: boolean;
+  //   canNegotiate: boolean;
+  // }>({ inProgress: false, shouldNegotiate: false, canNegotiate: true });
 
   const dispatch = useDispatch();
   const adjustLayout = (count: number): string => {
@@ -50,53 +55,44 @@ const Call = ({
   };
 
   //on peer negotiation needed event
-  // const handleNegotiation = async (e: Event, peer: string) => {
-  //   console.log("negotiation needed for peer ", peer, e);
-  //   const pc = peers.current[peer];
-  //   if (pc) {
-  //     try {
-  //       const offer = await pc.createOffer();
-  //       console.log(
-  //         "created offer sdp:",
-  //         sdpTransform.parse(offer.sdp as string)
-  //       );
+  const handleNegotiation = async (e: Event, peer: string) => {
+    console.log("negotiation needed for peer ", peer, e);
+    const pc = peers.current[peer];
+    console.log("can renegotiate?", canRenegotiate(pc));
 
-  //       await pc.setLocalDescription(new RTCSessionDescription(offer));
-
-  //       echoUtils.echoSocket.emit("signal", {
-  //         to: peer,
-  //         from: echoUtils.echoSocket.id,
-  //         type: offer.type,
-  //         sdp: offer.sdp,
-  //       });
-  //     } catch (err) {
-  //       console.log("error while negotation!");
-  //       console.error(err);
-  //     }
-  //   }
-  // };
-
-  const addLocalTracksToPeer = (
-    stream: MediaStream,
-    peerConnection: RTCPeerConnection
-  ): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const audioTrack = stream?.getAudioTracks()[0];
-      const videoTrack = stream?.getVideoTracks()[0];
-
-      console.log("2- adding media tracks to peer connections");
-
-      if (audioTrack) {
-        peerConnection.addTransceiver(audioTrack, { direction: "sendrecv" });
+    if (pc && canRenegotiate(pc)) {
+      try {
+        const offer = await pc.createOffer();
+        console.log(
+          "created offer sdp:",
+          sdpTransform.parse(offer.sdp as string)
+        );
+        await pc.setLocalDescription(new RTCSessionDescription(offer));
+        echoUtils.echoSocket.emit("signal", {
+          to: peer,
+          from: echoUtils.echoSocket.id,
+          type: offer.type,
+          sdp: offer.sdp,
+        });
+      } catch (err) {
+        console.error("error while negotation!", err);
       }
-
-      if (videoTrack) {
-        peerConnection.addTransceiver(videoTrack, { direction: "sendrecv" });
-      }
-
-      resolve(true);
-    });
+    }
   };
+
+  function canRenegotiate(peerConnection: RTCPeerConnection) {
+    // Check if signaling state is stable
+    const isSignalingStateGood = peerConnection.signalingState === "stable";
+
+    return isSignalingStateGood;
+  }
+
+  // useEffect(() => {
+  //   echoUtils.echoSocket.emit("negotiation", {
+  //     id: echoUtils.echoSocket.id,
+  //     negotaitionState,
+  //   });
+  // }, [negotaitionState]);
 
   useEffect(() => {
     //get local stream
@@ -267,8 +263,8 @@ const Call = ({
     Object.keys(connectionPeers).forEach((peer) => {
       if (!listenerMap.current.has(peer)) {
         //create a listener function
-        const negotiationListener = () => {
-          // handleNegotiation(e, peer);
+        const negotiationListener = (e: Event) => {
+          handleNegotiation(e, peer);
         };
 
         //store the listener function inside map to remove it later
@@ -299,19 +295,6 @@ const Call = ({
         }
       });
   }, [connectionPeers]);
-
-  useEffect(() => {
-    if (localStream) {
-      const execute = async (pc: RTCPeerConnection) => {
-        await addLocalTracksToPeer(localStreamRef.current as MediaStream, pc);
-      };
-
-      if (connectionPeers) {
-        const id = Object.keys(connectionPeers)[0];
-        execute(connectionPeers[id]);
-      }
-    }
-  }, [connectionPeers, localStream]);
 
   return (
     <div
