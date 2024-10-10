@@ -58,9 +58,10 @@ const Call = ({
   const handleNegotiation = async (e: Event, peer: string) => {
     console.log("negotiation needed for peer ", peer, e);
     const pc = peers.current[peer];
-    console.log("can renegotiate?", canRenegotiate(pc));
+    // console.log("can renegotiate?", canRenegotiate(pc));
+    console.log("ice state:", pc.connectionState);
 
-    if (pc && canRenegotiate(pc)) {
+    if (pc) {
       try {
         const offer = await pc.createOffer();
         console.log(
@@ -84,7 +85,27 @@ const Call = ({
     // Check if signaling state is stable
     const isSignalingStateGood = peerConnection.signalingState === "stable";
 
-    return isSignalingStateGood;
+    // Check if ICE gathering is complete
+    const isIceGatheringComplete =
+      peerConnection.iceGatheringState === "complete";
+
+    // Check if both local and remote descriptions are set
+    const hasDescriptions =
+      peerConnection.localDescription && peerConnection.remoteDescription;
+
+    // Check if ICE connection is either connected or completed
+    const isIceConnectionGood =
+      peerConnection.iceConnectionState === "connected" ||
+      peerConnection.iceConnectionState === "completed";
+
+    console.log(isIceConnectionGood);
+
+    return (
+      isSignalingStateGood &&
+      isIceGatheringComplete &&
+      hasDescriptions &&
+      isIceConnectionGood
+    );
   }
 
   // useEffect(() => {
@@ -155,6 +176,11 @@ const Call = ({
           });
         }
       };
+
+      // pc.onconnectionstatechange = () => {
+
+      // };
+
       console.log("calling:", opts.member.id);
     });
 
