@@ -81,32 +81,32 @@ const Call = ({
     }
   };
 
-  function canRenegotiate(peerConnection: RTCPeerConnection) {
-    // Check if signaling state is stable
-    const isSignalingStateGood = peerConnection.signalingState === "stable";
+  // function canRenegotiate(peerConnection: RTCPeerConnection) {
+  //   // Check if signaling state is stable
+  //   const isSignalingStateGood = peerConnection.signalingState === "stable";
 
-    // Check if ICE gathering is complete
-    const isIceGatheringComplete =
-      peerConnection.iceGatheringState === "complete";
+  //   // Check if ICE gathering is complete
+  //   const isIceGatheringComplete =
+  //     peerConnection.iceGatheringState === "complete";
 
-    // Check if both local and remote descriptions are set
-    const hasDescriptions =
-      peerConnection.localDescription && peerConnection.remoteDescription;
+  //   // Check if both local and remote descriptions are set
+  //   const hasDescriptions =
+  //     peerConnection.localDescription && peerConnection.remoteDescription;
 
-    // Check if ICE connection is either connected or completed
-    const isIceConnectionGood =
-      peerConnection.iceConnectionState === "connected" ||
-      peerConnection.iceConnectionState === "completed";
+  //   // Check if ICE connection is either connected or completed
+  //   const isIceConnectionGood =
+  //     peerConnection.iceConnectionState === "connected" ||
+  //     peerConnection.iceConnectionState === "completed";
 
-    console.log(isIceConnectionGood);
+  //   console.log(isIceConnectionGood);
 
-    return (
-      isSignalingStateGood &&
-      isIceGatheringComplete &&
-      hasDescriptions &&
-      isIceConnectionGood
-    );
-  }
+  //   return (
+  //     isSignalingStateGood &&
+  //     isIceGatheringComplete &&
+  //     hasDescriptions &&
+  //     isIceConnectionGood
+  //   );
+  // }
 
   // useEffect(() => {
   //   echoUtils.echoSocket.emit("negotiation", {
