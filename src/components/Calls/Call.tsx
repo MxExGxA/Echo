@@ -32,7 +32,6 @@ const Call = ({
   const listenerMap = useRef(new Map());
 
   const [connectionState, setConnectionState] = useState<string>();
-  const isPolite = useRef<boolean>();
 
   // const [negotaitionState, setNegotiationState] = useState<{
   //   inProgress: boolean;
@@ -60,7 +59,9 @@ const Call = ({
   //on peer negotiation needed event
   const handleNegotiation = async (peer: string) => {
     const pc = peers.current[peer];
+
     console.log("negotiation for :", peer, "has triggered");
+    console.log(pc);
 
     if (pc) {
       try {
@@ -192,10 +193,11 @@ const Call = ({
     //webrtc call process
     echoUtils.echoSocket.on("memberJoined", async (opts) => {
       const pc = new RTCPeerConnection(pcConfig);
-      isPolite.current = true;
+
       peers.current[opts.member.id] = pc;
       setConnectionPeers((prev) => ({ ...prev, [opts.member.id]: pc }));
 
+      // await addLocalTracksToPeer(opts.member.id, localStreamRef.current);
       pc.onconnectionstatechange = () => {
         setConnectionState(pc.connectionState);
       };
@@ -233,71 +235,57 @@ const Call = ({
     //handle signals
     echoUtils.echoSocket.on("signal", async (opts) => {
       let pc = peers.current[opts.from] || new RTCPeerConnection(pcConfig);
+
       peers.current[opts.from] = pc;
       setConnectionPeers((prev) => ({ ...prev, [opts.from]: pc }));
 
+      // await addLocalTracksToPeer(opts.from, localStreamRef.current);
       pc.onconnectionstatechange = () => {
         setConnectionState(pc.connectionState);
       };
 
-      if (opts.type === "offer") {
+      if (opts.type === "offer" && pc.signalingState === "stable") {
         try {
-          if (pc.signalingState === "stable") {
-            // Stable state, proceed with setting the remote description
-            await pc.setRemoteDescription(
-              new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
-            );
-          } else {
-            // Unstable signaling state, initiate rollback if this peer is polite
-            if (!isPolite) return;
-
-            console.log("Initiating rollback due to unstable signaling state.");
-            await Promise.all([
-              pc.setLocalDescription({ type: "rollback" }),
-              pc.setRemoteDescription(
-                new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
-              ),
-            ]);
-          }
-
-          // After handling the offer, create and send the answer
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-
-          // Send the answer back through signaling
-          echoUtils.echoSocket.emit("signal", {
-            to: opts.from,
-            from: echoUtils.echoSocket.id,
-            type: answer.type,
-            sdp: answer.sdp,
-          });
-
-          console.log("Received call from:", opts.from);
+          await pc.setRemoteDescription(
+            new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
+          );
         } catch (err) {
-          console.error("Error processing offer:", err);
+          console.error(err);
         }
-      }
 
+        const answer = await pc.createAnswer();
+        try {
+          await pc.setLocalDescription(new RTCSessionDescription(answer));
+        } catch (err) {
+          console.error(err);
+        }
+
+        echoUtils.echoSocket.emit("signal", {
+          to: opts.from,
+          from: echoUtils.echoSocket.id,
+          type: answer.type,
+          sdp: answer.sdp,
+        });
+        console.log("received call from:", opts.from);
+      }
       if (opts.type === "answer") {
         try {
-          // When receiving an answer, set the remote description
           console.log(
-            "Remote answer SDP:",
+            "remote answer sdp:",
             sdpTransform.parse(opts.sdp as string)
           );
           await pc.setRemoteDescription(
             new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
           );
         } catch (err) {
-          console.error("Error processing answer:", err);
+          console.error(err);
         }
       }
 
       if (opts.type === "candidate") {
         try {
-          // Handle ICE candidates
           await pc.addIceCandidate(new RTCIceCandidate(opts.candidate));
-          console.log("Added ICE candidate:", opts.candidate);
+          console.log(opts.candidate);
         } catch (error) {
           console.error("Error adding ICE candidate:", error);
         }
@@ -358,7 +346,10 @@ const Call = ({
       if (!listenerMap.current.has(peer)) {
         //create a listener function
         const negotiationListener = () => {
-          handleNegotiation(peer);
+          echoUtils.echoSocket.emit("negotiation", {
+            id: echoUtils.echoSocket.id,
+            peer,
+          });
         };
 
         //store the listener function inside map to remove it later
