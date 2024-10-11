@@ -61,7 +61,7 @@ const Call = ({
     const pc = peers.current[peer];
     console.log("negotiation for :", peer, "has triggered");
 
-    if (pc) {
+    if (pc && pc.signalingState === "stable") {
       try {
         const offer = await pc.createOffer();
         console.log(
@@ -78,6 +78,11 @@ const Call = ({
       } catch (err) {
         console.error("error while negotation!", err);
       }
+    } else {
+      console.log(
+        "cannot perform negotiation process, signaling state is:",
+        pc.signalingState
+      );
     }
   };
 
