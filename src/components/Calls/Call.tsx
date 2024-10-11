@@ -184,10 +184,6 @@ const Call = ({
       console.log("1- got the localstream", localStreamRef.current.getTracks());
     });
 
-    echoUtils.echoSocket.on("negotiation", (opts) => {
-      handleNegotiation(opts.peer);
-    });
-
     //webrtc call process
     echoUtils.echoSocket.on("memberJoined", async (opts) => {
       const pc = new RTCPeerConnection(pcConfig);
@@ -242,7 +238,9 @@ const Call = ({
         setConnectionState(pc.connectionState);
       };
 
-      if (opts.type === "offer" && pc.signalingState === "stable") {
+      if (opts.type === "offer") {
+        console.log("signaling state:", pc.signalingState);
+
         try {
           await pc.setRemoteDescription(
             new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
@@ -266,6 +264,7 @@ const Call = ({
         });
         console.log("received call from:", opts.from);
       }
+
       if (opts.type === "answer") {
         try {
           console.log(
