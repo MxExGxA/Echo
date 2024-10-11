@@ -61,28 +61,30 @@ const Call = ({
     const pc = peers.current[peer];
     console.log("negotiation for :", peer, "has triggered");
 
-    if (pc && pc.signalingState === "stable") {
+    if (pc) {
       try {
         const offer = await pc.createOffer();
         console.log(
           "created offer sdp:",
           sdpTransform.parse(offer.sdp as string)
         );
-        await pc.setLocalDescription(new RTCSessionDescription(offer));
-        echoUtils.echoSocket.emit("signal", {
-          to: peer,
-          from: echoUtils.echoSocket.id,
-          type: offer.type,
-          sdp: offer.sdp,
-        });
+        if (pc.signalingState === "stable") {
+          await pc.setLocalDescription(new RTCSessionDescription(offer));
+          echoUtils.echoSocket.emit("signal", {
+            to: peer,
+            from: echoUtils.echoSocket.id,
+            type: offer.type,
+            sdp: offer.sdp,
+          });
+        } else {
+          console.log(
+            "cannot perform negotiation process, signaling state is:",
+            pc.signalingState
+          );
+        }
       } catch (err) {
         console.error("error while negotation!", err);
       }
-    } else {
-      console.log(
-        "cannot perform negotiation process, signaling state is:",
-        pc.signalingState
-      );
     }
   };
 
