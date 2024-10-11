@@ -59,6 +59,7 @@ const Call = ({
   //on peer negotiation needed event
   const handleNegotiation = async (peer: string) => {
     const pc = peers.current[peer];
+    console.log(peer);
 
     console.log("negotiation for :", peer, "has triggered");
     console.log(pc);
@@ -82,6 +83,55 @@ const Call = ({
       }
     }
   };
+
+  // const addLocalTracksToPeer = (peer: string, stream: MediaStream) => {
+  //   return new Promise((resolve) => {
+  //     const audioTrack = stream?.getAudioTracks()[0];
+  //     const videoTrack = stream?.getVideoTracks()[0];
+
+  //     const audioTransceiver = peers.current[peer]!.getTransceivers().find(
+  //       (t) => t.sender.track && t.sender.track.kind === "audio"
+  //     );
+  //     // if it has no  audio track, add our localstream audio track to it
+  //     if (!audioTransceiver) {
+  //       try {
+  //         if (audioTrack) {
+  //           console.log("adding audio track !!!");
+
+  //           peers.current[peer].addTransceiver(audioTrack, {
+  //             direction: "sendrecv",
+  //           });
+  //         }
+  //       } catch (err) {
+  //         throw new Error(
+  //           `Error: couldn't add audio track to peer ${peers.current[peer]}`
+  //         );
+  //       }
+  //     }
+
+  //     const videoTransceiver = peers.current[peer]!.getTransceivers().find(
+  //       (t) => t.sender.track && t.sender.track.kind === "video"
+  //     );
+
+  //     //if it has no  video track, add our localstream video track to it
+  //     if (!videoTransceiver) {
+  //       try {
+  //         if (videoTrack) {
+  //           console.log("adding video track !!!");
+  //           peers.current[peer].addTransceiver(videoTrack, {
+  //             direction: "sendrecv",
+  //           });
+  //         }
+  //       } catch (err) {
+  //         throw new Error(
+  //           `Error: couldn't add video track to peer ${peers.current[peer]}`
+  //         );
+  //       }
+  //     }
+
+  //     resolve([audioTransceiver, videoTransceiver]);
+  //   });
+  // };
 
   // function canRenegotiate(peerConnection: RTCPeerConnection) {
   //   // Check if signaling state is stable
@@ -144,15 +194,16 @@ const Call = ({
     //webrtc call process
     echoUtils.echoSocket.on("memberJoined", async (opts) => {
       const pc = new RTCPeerConnection(pcConfig);
+
       peers.current[opts.member.id] = pc;
       setConnectionPeers((prev) => ({ ...prev, [opts.member.id]: pc }));
 
+      pc.onconnectionstatechange = () => {
+        setConnectionState(pc.connectionState);
+      };
+
       //initiate call
       const offer = await pc.createOffer();
-      console.log(
-        "created offer sdp:",
-        sdpTransform.parse(offer.sdp as string)
-      );
       try {
         await pc.setLocalDescription(new RTCSessionDescription(offer));
       } catch (err) {
@@ -167,6 +218,8 @@ const Call = ({
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log(event.candidate);
+
           echoUtils.echoSocket.emit("signal", {
             to: opts.member.id,
             from: echoUtils.echoSocket.id,
@@ -190,12 +243,19 @@ const Call = ({
       };
 
       if (opts.type === "offer") {
-        try {
-          await pc.setRemoteDescription(
-            new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
-          );
-        } catch (err) {
-          console.error(err);
+        if (pc.signalingState === "stable") {
+          try {
+            await pc.setRemoteDescription(
+              new RTCSessionDescription({ type: opts.type, sdp: opts.sdp })
+            );
+          } catch (err) {
+            console.error(err);
+          }
+        } else {
+          await Promise.all([
+            pc.setLocalDescription({ type: "rollback" }),
+            pc.setRemoteDescription({ type: opts.type, sdp: opts.sdp }),
+          ]);
         }
 
         const answer = await pc.createAnswer();
@@ -213,6 +273,7 @@ const Call = ({
         });
         console.log("received call from:", opts.from);
       }
+
       if (opts.type === "answer") {
         try {
           console.log(
@@ -230,6 +291,7 @@ const Call = ({
       if (opts.type === "candidate") {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(opts.candidate));
+          console.log(opts.candidate);
         } catch (error) {
           console.error("Error adding ICE candidate:", error);
         }
@@ -290,10 +352,7 @@ const Call = ({
       if (!listenerMap.current.has(peer)) {
         //create a listener function
         const negotiationListener = () => {
-          echoUtils.echoSocket.emit("negotiation", {
-            id: echoUtils.echoSocket.id,
-            peer,
-          });
+          handleNegotiation(peer);
         };
 
         //store the listener function inside map to remove it later

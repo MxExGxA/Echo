@@ -72,11 +72,11 @@ const LocalStream = ({
       Object.keys(peers).forEach((peer) => {
         if (stream) {
           //check if this peer has audio track on it
-          const hasAudio = peers[peer]
-            .getSenders()
-            .find((sender) => sender.track?.kind === "audio");
+          const audioTransceiver = peers[peer]
+            .getTransceivers()
+            .find((t) => t.sender.track && t.sender.track.kind === "audio");
           // if it has no  audio track, add our localstream audio track to it
-          if (!hasAudio) {
+          if (!audioTransceiver) {
             try {
               const audioTrack = stream?.getAudioTracks()[0];
               if (audioTrack) {

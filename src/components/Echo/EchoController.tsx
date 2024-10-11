@@ -129,7 +129,6 @@ const EchoController = () => {
       });
       socket.on("memberKicked", (opts) => {
         if (opts.member.id === echoUtils.echoSocket.id) {
-          socket.disconnect();
           navigate(`/kicked/?echo=${opts.echoID}`, { replace: true });
         }
       });
