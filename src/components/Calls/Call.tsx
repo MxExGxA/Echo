@@ -59,9 +59,7 @@ const Call = ({
   //on peer negotiation needed event
   const handleNegotiation = async (peer: string) => {
     const pc = peers.current[peer];
-
     console.log("negotiation for :", peer, "has triggered");
-    console.log(pc);
 
     if (pc) {
       try {
@@ -346,10 +344,7 @@ const Call = ({
       if (!listenerMap.current.has(peer)) {
         //create a listener function
         const negotiationListener = () => {
-          echoUtils.echoSocket.emit("negotiation", {
-            id: echoUtils.echoSocket.id,
-            peer,
-          });
+          handleNegotiation(peer);
         };
 
         //store the listener function inside map to remove it later
