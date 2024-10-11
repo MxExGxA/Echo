@@ -69,6 +69,8 @@ const Call = ({
           sdpTransform.parse(offer.sdp as string)
         );
         if (pc.signalingState === "stable") {
+          console.log(pc.signalingState);
+
           await pc.setLocalDescription(new RTCSessionDescription(offer));
           echoUtils.echoSocket.emit("signal", {
             to: peer,
