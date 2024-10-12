@@ -254,6 +254,7 @@ const Call = ({
         }
 
         const answer = await pc.createAnswer();
+        answer.sdp = answer.sdp!.replace(/a=recvonly/g, "a=sendrecv");
         try {
           await pc.setLocalDescription(new RTCSessionDescription(answer));
         } catch (err) {

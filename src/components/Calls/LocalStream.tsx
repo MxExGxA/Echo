@@ -125,7 +125,7 @@ const LocalStream = ({
                   .find((sender) => sender.track === screenTrack)
               ) {
                 peers[peer].addTransceiver(screenTrack, {
-                  direction: "sendonly",
+                  direction: "sendrecv",
                 });
               }
             } catch (err) {
