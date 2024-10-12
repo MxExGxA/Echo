@@ -68,22 +68,13 @@ const Call = ({
           "created offer sdp:",
           sdpTransform.parse(offer.sdp as string)
         );
-        if (pc.signalingState === "stable") {
-          console.log(pc.signalingState);
-
-          await pc.setLocalDescription(new RTCSessionDescription(offer));
-          echoUtils.echoSocket.emit("signal", {
-            to: peer,
-            from: echoUtils.echoSocket.id,
-            type: offer.type,
-            sdp: offer.sdp,
-          });
-        } else {
-          console.log(
-            "cannot perform negotiation process, signaling state is:",
-            pc.signalingState
-          );
-        }
+        await pc.setLocalDescription(new RTCSessionDescription(offer));
+        echoUtils.echoSocket.emit("signal", {
+          to: peer,
+          from: echoUtils.echoSocket.id,
+          type: offer.type,
+          sdp: offer.sdp,
+        });
       } catch (err) {
         console.error("error while negotation!", err);
       }
@@ -196,6 +187,10 @@ const Call = ({
     //webrtc call process
     echoUtils.echoSocket.on("memberJoined", async (opts) => {
       const pc = new RTCPeerConnection(pcConfig);
+
+      setTimeout(() => {
+        handleNegotiation(opts.member.id);
+      }, 5000);
 
       peers.current[opts.member.id] = pc;
       setConnectionPeers((prev) => ({ ...prev, [opts.member.id]: pc }));
@@ -352,7 +347,7 @@ const Call = ({
       if (!listenerMap.current.has(peer)) {
         //create a listener function
         const negotiationListener = () => {
-          handleNegotiation(peer);
+          // handleNegotiation(peer);
         };
 
         //store the listener function inside map to remove it later
