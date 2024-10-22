@@ -188,7 +188,7 @@ const RemoteStream = ({
         );
       });
     }
-  }, [producers, device]);
+  }, [producers, consumerTransport]);
 
   return (
     <div
