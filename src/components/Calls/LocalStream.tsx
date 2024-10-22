@@ -9,11 +9,9 @@ import gsap from "gsap";
 const LocalStream = ({
   stream,
   echoUtils,
-  peers,
 }: {
   stream: MediaStream | null;
   echoUtils: EchoUtils;
-  peers: { [key: string]: RTCPeerConnection };
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const screenShareRef = useRef<HTMLVideoElement>(null);
@@ -66,79 +64,6 @@ const LocalStream = ({
       setMemberName(member.name);
     }
   }, [membersSelector]);
-
-  useEffect(() => {
-    if (peers) {
-      Object.keys(peers).forEach((peer) => {
-        if (stream) {
-          //check if this peer has audio track on it
-          const audioTransceiver = peers[peer]
-            .getTransceivers()
-            .find((t) => t.sender.track && t.sender.track.kind === "audio");
-          // if it has no  audio track, add our localstream audio track to it
-          if (!audioTransceiver) {
-            try {
-              const audioTrack = stream?.getAudioTracks()[0];
-              if (audioTrack) {
-                peers[peer].addTransceiver(audioTrack, {
-                  direction: "sendrecv",
-                });
-              }
-            } catch (err) {
-              throw new Error(
-                `Error: couldn't add audio track to peer ${peers[peer]}`
-              );
-            }
-          }
-          // // check if this peer has video track on it
-          const videoTransceiver = peers[peer]
-            .getTransceivers()
-            .find((t) => t.sender.track && t.sender.track.kind === "video");
-
-          //if it has no  video track, add our localstream video track to it
-          if (!videoTransceiver) {
-            try {
-              console.log("adding video transceiver");
-              const videoTrack = stream?.getVideoTracks()[0];
-              if (videoTrack) {
-                peers[peer].addTransceiver(videoTrack, {
-                  direction: "sendrecv",
-                });
-              }
-            } catch (err) {
-              throw new Error(
-                `Error: couldn't add video track to peer ${peers[peer]}`
-              );
-            }
-          }
-          // //if local screen shared
-          if (localScreenShared) {
-            try {
-              const screenTrack = stream
-                ?.getVideoTracks()
-                .find(
-                  (t) => t.getCapabilities().displaySurface
-                ) as MediaStreamTrack;
-              if (
-                !peers[peer]
-                  .getSenders()
-                  .find((sender) => sender.track === screenTrack)
-              ) {
-                peers[peer].addTransceiver(screenTrack, {
-                  direction: "sendrecv",
-                });
-              }
-            } catch (err) {
-              console.log(err);
-              throw new Error(
-                `Error: couldn't add screen track to peer ${peers[peer]}`
-              );
-            }
-          }
-        }
-      });
-    }
-  }, [peers, stream]);
 
   useEffect(() => {
     Draggable.create(".draggable", {

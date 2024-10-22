@@ -8,16 +8,16 @@ const EchoHome = () => {
   const [creationLoading, setCreationLoading] = useState<boolean>(false);
   const [joiningLoading, setJoiningLoading] = useState<boolean>(false);
 
-  const router = useNavigate();
+  const navigate = useNavigate();
 
   const handleCreateEcho = () => {
     setCreationLoading(true);
-    router("/echo/create");
+    navigate("/echo/create");
   };
 
   const handleJoinEcho = () => {
     setJoiningLoading(true);
-    router("/echo/join");
+    navigate("/echo/join");
   };
 
   return (

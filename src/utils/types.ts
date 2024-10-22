@@ -17,6 +17,10 @@ export interface MessageType {
   message: string;
 }
 
+export interface peerType {
+  audio: string;
+  video: string;
+}
 export interface joinRequest {
   member: Member;
   echoID: string;
@@ -58,6 +62,10 @@ export type mediaType = {
   screen: { id: string | undefined; toggle: boolean };
   mic: { id: string | undefined; toggle: boolean };
 };
+
+export interface producersType {
+  [id: string]: (string | null)[];
+}
 
 export type statusType = {
   joined?: boolean;

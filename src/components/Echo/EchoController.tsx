@@ -16,6 +16,7 @@ import { addJoinRequest } from "@/redux/joinRequestsSlice";
 import { addMessage, setMessages } from "@/redux/messagesSlice";
 import { setMedia } from "@/redux/mediaSlice";
 import EchoDashboard from "@/components/Echo/EchoDashboard";
+import { setProducers } from "@/redux/producersSlice";
 
 const EchoController = () => {
   const echoUtilsRef = useRef<EchoUtils>();
@@ -84,12 +85,14 @@ const EchoController = () => {
         dispatch(setMembers(opts.members));
         dispatch(setMessages(opts.messages));
         dispatch(setMedia(opts.media));
+        dispatch(setProducers(opts.producers));
+
         clearTimeout(timeOutRef.current);
       });
       socket.on("memberJoined", (opts) => {
-        dispatch(setMembers(opts.echo.members));
-        dispatch(setMessages(opts.echo.messages));
-        dispatch(setMedia(opts.echo.media));
+        dispatch(setMembers(opts.members));
+        dispatch(setMessages(opts.messages));
+        dispatch(setMedia(opts.media));
       });
       socket.on("memberLeft", (opts) => {
         dispatch(setMembers(opts.members));

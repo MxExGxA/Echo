@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FaCode } from "react-icons/fa";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import { EchoUtils } from "@/utils/Utiliteis";
-import Call from "../Calls/Call";
+import Call from "../Calls/Call.tsx";
 import ToggleButton from "../Buttons/ToggleButton";
 
 const DynamicLayout = ({ echoUtils }: { echoUtils: EchoUtils }) => {

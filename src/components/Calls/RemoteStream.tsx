@@ -6,16 +6,21 @@ import { CiMicrophoneOff } from "react-icons/ci";
 import { EchoUtils } from "@/utils/Utiliteis";
 import CallPlaceholder from "./CallPlaceholder";
 import gsap from "gsap";
+import { types } from "mediasoup-client";
 
 const RemoteStream = ({
   className,
-  peer,
   echoUtils,
+  consumerTransport,
+  device,
+  // peer,
   id,
 }: {
   className?: string;
-  peer: RTCPeerConnection;
   echoUtils: EchoUtils;
+  consumerTransport: types.Transport;
+  device: types.Device;
+  // peer: peerType;
   id: string;
 }) => {
   const [toggleVideo, setToggleVideo] = useState<boolean>(false);
@@ -23,14 +28,15 @@ const RemoteStream = ({
   const [memberName, setMemberName] = useState<string>("");
   const [audio, setAudio] = useState<MediaStream>();
   const [remoteScreenShared, setRemoteScreenShared] = useState<boolean>(false);
-  const [videoTrackList, setVideoTrackList] = useState<MediaStreamTrack[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const screenShareRef = useRef<HTMLVideoElement>(null);
-
   const mediaSelector = useSelector((state: stateType) => state.media.media);
   const membersSelector = useSelector(
     (state: stateType) => state.members.members
+  );
+  const producers = useSelector(
+    (state: stateType) => state.producers.producers
   );
 
   useEffect(() => {
@@ -40,30 +46,9 @@ const RemoteStream = ({
         setToggleVideo(mediaConf.camera.toggle);
         setToggleAudio(mediaConf.mic.toggle);
         setRemoteScreenShared(mediaConf.screen.toggle);
-
-        if (videoTrackList.length) {
-          if (mediaConf.camera.toggle) {
-            const cameraTrack = videoTrackList.find(
-              (track) => track.id === mediaConf.camera.id
-            );
-            if (cameraTrack) {
-              const cameraStream = new MediaStream([cameraTrack]);
-              videoRef.current!.srcObject = cameraStream;
-            }
-          }
-          if (mediaConf.screen.toggle) {
-            const screenTrack = videoTrackList.find(
-              (track) => track.id === mediaConf.screen.id
-            );
-            if (screenTrack) {
-              const screenStream = new MediaStream([screenTrack]);
-              screenShareRef.current!.srcObject = screenStream;
-            }
-          }
-        }
       }
     });
-  }, [mediaSelector, videoTrackList]);
+  }, [mediaSelector]);
 
   useEffect(() => {
     if (membersSelector) {
@@ -73,34 +58,6 @@ const RemoteStream = ({
       }
     }
   }, [membersSelector]);
-
-  useEffect(() => {
-    if (peer) {
-      peer.ontrack = (event: RTCTrackEvent) => {
-        console.log("new track", event);
-
-        if (event.track.kind === "video") {
-          if (!videoTrackList.some((track) => track.id === event.track.id)) {
-            setVideoTrackList((prev) => [...prev, event.track]);
-          }
-        }
-
-        if (event.track.kind === "audio") {
-          const audioStream = new MediaStream([event.track]);
-          setAudio(audioStream);
-          audioRef.current!.srcObject = audioStream;
-        }
-      };
-
-      echoUtils.echoSocket.on("screenShare", (opts) => {
-        opts.memberID === id && setRemoteScreenShared(true);
-      });
-
-      echoUtils.echoSocket.on("stopScreenShare", (opts) => {
-        opts.memberID === id && setRemoteScreenShared(false);
-      });
-    }
-  }, [peer, screenShareRef.current, videoRef.current]);
 
   useEffect(() => {
     if (!remoteScreenShared) {
@@ -119,6 +76,119 @@ const RemoteStream = ({
       audio.getTracks().forEach((track) => (track.enabled = toggleAudio));
     }
   }, [toggleAudio]);
+
+  useEffect(() => {
+    echoUtils.echoSocket.on("incommingMedia", async (opts) => {
+      if (consumerTransport && opts.memberID === id) {
+        echoUtils.echoSocket.emit(
+          "consume",
+          {
+            rtpCapabilities: device!.rtpCapabilities,
+            producerId: opts.producerId,
+          },
+          async ({
+            consumerId,
+            producerId,
+            kind,
+            rtpParameters,
+            error,
+          }: {
+            consumerId: string;
+            producerId: string;
+            kind: types.MediaKind;
+            rtpParameters: types.RtpParameters;
+            error: any;
+          }) => {
+            if (error) {
+              return;
+            }
+
+            const consumer = await consumerTransport?.consume({
+              id: consumerId,
+              producerId: producerId,
+              kind,
+              rtpParameters,
+            });
+
+            if (consumer) {
+              if (consumer.kind === "audio") {
+                const audioStream = new MediaStream();
+                audioStream.addTrack(consumer.track);
+                audioRef.current!.srcObject = audioStream;
+                setAudio(audioStream);
+              }
+              if (consumer.kind === "video") {
+                const videoStream = new MediaStream();
+                videoStream.addTrack(consumer.track);
+                videoRef.current!.srcObject = videoStream;
+              }
+            }
+            echoUtils.echoSocket.emit("resumeConsumer");
+          }
+        );
+      }
+    });
+  }, [consumerTransport]);
+
+  useEffect(() => {
+    const producersArr = producers[id];
+    console.log("=================<<<<<<<<<>>>>>>>>>", device);
+    console.log("=================<<<<<<<<<>>>>>>>>>", consumerTransport);
+
+    if (producersArr && device && consumerTransport) {
+      producersArr.forEach((producer) => {
+        console.log(producer);
+
+        echoUtils.echoSocket.emit(
+          "consume",
+          {
+            rtpCapabilities: device.rtpCapabilities,
+            producerId: producer,
+          },
+          async ({
+            consumerId,
+            producerId,
+            kind,
+            rtpParameters,
+            error,
+          }: {
+            consumerId: string;
+            producerId: string;
+            kind: types.MediaKind;
+            rtpParameters: types.RtpParameters;
+            error: any;
+          }) => {
+            if (error) {
+              return;
+            }
+            console.log("triggered!!!!!!!!!");
+
+            const consumer = await consumerTransport?.consume({
+              id: consumerId,
+              producerId: producerId,
+              kind,
+              rtpParameters,
+            });
+
+            if (consumer) {
+              if (consumer.kind === "audio") {
+                const audioStream = new MediaStream();
+                audioStream.addTrack(consumer.track);
+                audioRef.current!.srcObject = audioStream;
+                setAudio(audioStream);
+              }
+              if (consumer.kind === "video") {
+                const videoStream = new MediaStream();
+                videoStream.addTrack(consumer.track);
+                videoRef.current!.srcObject = videoStream;
+              }
+            }
+            echoUtils.echoSocket.emit("resumeConsumer");
+          }
+        );
+      });
+    }
+  }, [producers, device, consumerTransport]);
 
   return (
     <div

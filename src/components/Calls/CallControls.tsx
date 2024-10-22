@@ -10,13 +10,11 @@ import { EchoUtils } from "@/utils/Utiliteis";
 const CallControls = ({
   echoUtils,
   stream,
-  peers,
   micPermission,
   cameraPermission,
 }: {
   echoUtils: EchoUtils;
   stream: MediaStream | null;
-  peers: { [key: string]: RTCPeerConnection };
   micPermission: boolean;
   cameraPermission: boolean;
 }) => {
@@ -27,12 +25,12 @@ const CallControls = ({
   const screenShareTrack = useRef<MediaStreamTrack | null>(null);
   const navigate = useNavigate();
   const [queries] = useSearchParams();
-
   const cameraQuery = queries.get("camera") === "true" ? true : false;
   const micQuery = queries.get("mic") === "true" ? true : false;
 
   const handleShareScreen = (): void => {
     //if share screen is off, turn it on
+
     if (!toggleShareScreen) {
       if (stream) {
         try {
@@ -170,45 +168,6 @@ const CallControls = ({
       : setToggleVideo(false);
     micPermission && micQuery ? setToggleAudio(true) : setToggleAudio(false);
   }, [cameraPermission, micPermission]);
-
-  useEffect(() => {
-    if (toggleShareScreen) {
-      Object.keys(peers).forEach((peer) => {
-        if (screenShareTrack.current) {
-          try {
-            console.log(peers[peer].getTransceivers());
-            peers[peer].addTransceiver(screenShareTrack.current, {
-              direction: "sendonly",
-              streams: [screenStreamRef.current as MediaStream],
-            });
-          } catch (err) {
-            console.log(err);
-          }
-        }
-      });
-    } else {
-      Object.keys(peers).forEach((peer) => {
-        if (screenShareTrack.current) {
-          try {
-            console.log(peers[peer].getTransceivers());
-            const screenShareSender = peers[peer]
-              .getSenders()
-              .find((sender) => sender.track === screenShareTrack.current);
-
-            if (screenShareSender) peers[peer].removeTrack(screenShareSender);
-
-            peers[peer].getTransceivers().forEach((t) => {
-              if (t.currentDirection === "inactive") {
-                t.stop();
-              }
-            });
-          } catch (err) {
-            console.log(err);
-          }
-        }
-      });
-    }
-  }, [toggleShareScreen]);
 
   useEffect(() => {
     return () => stream?.getTracks().forEach((t) => t.stop());
