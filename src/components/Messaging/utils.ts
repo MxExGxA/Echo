@@ -35,3 +35,10 @@ export const checkMedia = (
     setIsVideo(true);
   }
 };
+
+export const checkLinkProtocol = (link: string) => {
+  if (!/^https?:\/\//i.test(link)) {
+    return "https://" + link;
+  }
+  return link;
+};

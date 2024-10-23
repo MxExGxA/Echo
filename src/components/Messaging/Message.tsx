@@ -1,10 +1,12 @@
 import { stateType } from "@/redux/store";
 import { Admin, MessageType, socketClient } from "@/utils/types";
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { checkMedia } from "./utils";
+import { checkLinkProtocol, checkMedia } from "./utils";
 import { MediaContainer } from "./MediaContainer";
+import validator from "validator";
+import { IoMdDownload } from "react-icons/io";
+import { FiExternalLink } from "react-icons/fi";
 
 const Message = ({
   message,
@@ -26,6 +28,12 @@ const Message = ({
       const pathFromMessage = message.message.split("::")[1];
       setLink(`${import.meta.env.VITE_PUBLIC_SERVER}/file/${pathFromMessage}`);
       checkMedia(setIsImage, setIsVideo, message);
+    }
+
+    const isLink = validator.isURL(message.message);
+    if (isLink) {
+      const linkWithProtocol = checkLinkProtocol(message.message);
+      setLink(linkWithProtocol);
     }
   }, []);
 
@@ -54,22 +62,42 @@ const Message = ({
       >
         {" "}
         {link ? (
-          <>
-            <Link
-              className="border-b border-main-blue text-main-blue"
-              to={link}
-              target="_blank"
-            >
-              {!isImage && !isVideo ? (
-                message.message.split("::")[0]
-              ) : (
-                <div className="inline-block text-white text-sm bg-main-blue rounded-md px-2 py-1">
-                  download
-                </div>
-              )}
-            </Link>
-            <MediaContainer isImage={isImage} isVideo={isVideo} source={link} />
-          </>
+          <div className="text-main-blue">
+            {!isImage && !isVideo ? (
+              <a href={link} target="_blank" className="flex items-center">
+                {message.message.split("::")[0]}{" "}
+                <FiExternalLink className="ml-2 flex-shrink-0" />
+              </a>
+            ) : (
+              <div className="relative border-8 rounded-md border-main-blue">
+                <a
+                  title="donwload"
+                  href={link}
+                  target="_blank"
+                  className="absolute -right-2 -bottom-6 rounded-bl-md rounded-br-md text-white text-sm bg-main-blue px-2 py-1 z-10"
+                >
+                  <IoMdDownload />
+                </a>
+                {isImage ? (
+                  <a href={link} target="_blank">
+                    <MediaContainer
+                      isImage={isImage}
+                      isVideo={isVideo}
+                      alt={message.message.split("::")[0]}
+                      source={link}
+                    />
+                  </a>
+                ) : (
+                  <MediaContainer
+                    isImage={isImage}
+                    isVideo={isVideo}
+                    alt={message.message.split("::")[0]}
+                    source={link}
+                  />
+                )}
+              </div>
+            )}
+          </div>
         ) : (
           message.message
         )}
