@@ -3,6 +3,8 @@ import { Admin, MessageType, socketClient } from "@/utils/types";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { checkMedia } from "./utils";
+import { MediaContainer } from "./MediaContainer";
 
 const Message = ({
   message,
@@ -16,11 +18,14 @@ const Message = ({
   );
   const from = membersSelector.find((m) => m.id === message.fromID) as Admin;
   const [link, setLink] = useState<string>("");
+  const [isImage, setIsImage] = useState<boolean>(false);
+  const [isVideo, setIsVideo] = useState<boolean>(false);
 
   useEffect(() => {
     if (message.type === "file") {
       const pathFromMessage = message.message.split("::")[1];
       setLink(`${import.meta.env.VITE_PUBLIC_SERVER}/file/${pathFromMessage}`);
+      checkMedia(setIsImage, setIsVideo, message);
     }
   }, []);
 
@@ -49,9 +54,22 @@ const Message = ({
       >
         {" "}
         {link ? (
-          <Link className="border-b border-black" to={link} target="_blank">
-            {message.message.split("::")[0]}
-          </Link>
+          <>
+            <Link
+              className="border-b border-main-blue text-main-blue"
+              to={link}
+              target="_blank"
+            >
+              {!isImage && !isVideo ? (
+                message.message.split("::")[0]
+              ) : (
+                <div className="inline-block text-white text-sm bg-main-blue rounded-md px-2 py-1">
+                  download
+                </div>
+              )}
+            </Link>
+            <MediaContainer isImage={isImage} isVideo={isVideo} source={link} />
+          </>
         ) : (
           message.message
         )}

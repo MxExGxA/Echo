@@ -136,8 +136,7 @@ const RemoteStream = ({
           if (consumer.kind === "video") {
             const videoStream = new MediaStream();
             videoStream.addTrack(consumer.track);
-            console.log(producer?.appData);
-            if (producer?.appData === "screen") {
+            if (producer?.appData.trackType === "screen") {
               screenShareRef.current!.srcObject = videoStream;
             } else {
               videoRef.current!.srcObject = videoStream;
