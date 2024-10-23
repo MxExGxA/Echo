@@ -9,6 +9,7 @@ import gsap from "gsap";
 import { Device, types } from "mediasoup-client";
 import { useSelector } from "react-redux";
 import { stateType } from "@/redux/store";
+import { produceMedia } from "@/utils/mediasoup/helpers";
 
 const Call = ({
   editorToggled,
@@ -115,12 +116,11 @@ const Call = ({
               );
 
               producerTransport.current.on("produce", (opts, callback) => {
-                console.log("producer transport started producing :)");
-
                 echoUtils.echoSocket.emit(
                   "produce",
                   {
                     kind: opts.kind,
+                    appData: opts.appData,
                     rtpParameters: opts.rtpParameters,
                   },
                   (producerId: string) => {
@@ -134,24 +134,13 @@ const Call = ({
               if (streamTracks) {
                 streamTracks.forEach(async (track) => {
                   if (track && producerTransport.current) {
-                    console.log("there is", track.kind);
-                    console.log(
-                      "producer transport",
-                      producerTransport.current
+                    const producer = await produceMedia(
+                      producerTransport.current,
+                      track
                     );
+                    console.log(producer?.id);
 
-                    try {
-                      const producer = await producerTransport.current?.produce(
-                        {
-                          track: track as MediaStreamTrack,
-                        }
-                      );
-                      console.log("Producer =========>", producer);
-
-                      producers.current?.push(producer);
-                    } catch (err) {
-                      console.log("there was an error ");
-                    }
+                    producers.current?.push(producer as types.Producer);
                   }
                 });
               }
@@ -195,6 +184,7 @@ const Call = ({
 
       // echoUtils.echoSocket.on("memberLeft", (opts) => {});
     })();
+    return () => producers.current?.forEach((p) => p.close());
   }, []);
 
   useEffect(() => {
@@ -221,18 +211,23 @@ const Call = ({
           )}, 1fr))`,
         }}
       >
-        <LocalStream stream={localStream} echoUtils={echoUtils} />
+        <LocalStream
+          stream={localStream}
+          echoUtils={echoUtils}
+          producerTransport={producerTransport.current as types.Transport}
+        />
         {members.map(
-          (member) =>
+          (member, index) =>
             member.id !== echoUtils.echoSocket.id && (
               <RemoteStream
                 key={member.id}
                 echoUtils={echoUtils}
                 id={member.id}
-                // peer={peers[member.id]}
                 consumerTransport={consumerTransportState as types.Transport}
                 device={deviceState as types.Device}
-                className=""
+                className={`${
+                  index === 2 && members.length === 3 ? "third-grid-item" : ""
+                }`}
               />
             )
         )}

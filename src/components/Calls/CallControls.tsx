@@ -30,7 +30,6 @@ const CallControls = ({
 
   const handleShareScreen = (): void => {
     //if share screen is off, turn it on
-
     if (!toggleShareScreen) {
       if (stream) {
         try {
@@ -119,11 +118,9 @@ const CallControls = ({
   useEffect(() => {
     if (stream) {
       const audio = stream.getAudioTracks()[0];
-
       if (audio) {
         audio!.enabled = toggleAudio;
         audio.dispatchEvent(new Event(toggleAudio ? "unmute" : "mute"));
-
         const audioTrackId = audio.id;
         toggleAudio
           ? emitMedia("mic", true, audioTrackId)

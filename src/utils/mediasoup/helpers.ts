@@ -1,34 +1,59 @@
 import { Socket } from "socket.io-client";
-import { types as mediaSoupTypes } from "mediasoup-client";
+import { types } from "mediasoup-client";
+
+export const produceMedia = async (
+  transport: types.Transport,
+  track: MediaStreamTrack,
+  trackType?: string
+) => {
+  try {
+    const producer = await transport.produce({
+      track: track as MediaStreamTrack,
+      appData: { trackType },
+    });
+    return producer;
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 export const consumeMedia = (
   socket: Socket,
-  device: mediaSoupTypes.Device,
-  consumerTranport: mediaSoupTypes.Transport,
-  consumerOpts: {
-    producerId: string;
-    kind: "audio" | "video";
-    rtpParameters: mediaSoupTypes.RtpParameters;
-  }
-) => {
+  device: types.Device,
+  consumerTransport: types.Transport,
+  producerId: string
+): Promise<types.Consumer> => {
   return new Promise((resolve, reject) => {
     socket.emit(
       "consume",
       {
         rtpCapabilities: device.rtpCapabilities,
-        producerId: consumerOpts.producerId,
+        producerId,
       },
-      async ({ id }: { id: string }) => {
+      async ({
+        consumerId,
+        producerId,
+        kind,
+        rtpParameters,
+        error,
+      }: {
+        consumerId: string;
+        producerId: string;
+        kind: types.MediaKind;
+        rtpParameters: types.RtpParameters;
+        error: any;
+      }) => {
+        console.log("try to consume !");
+        if (error) {
+          return;
+        }
         try {
-          console.log(id);
-
-          console.log(device.rtpCapabilities);
-          console.log(consumerOpts.rtpParameters);
-          const consumer = await consumerTranport?.consume({
-            id,
-            ...consumerOpts,
+          const consumer = await consumerTransport?.consume({
+            id: consumerId,
+            producerId: producerId,
+            kind,
+            rtpParameters,
           });
-
           resolve(consumer);
         } catch (err) {
           reject(err);

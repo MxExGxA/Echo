@@ -5,13 +5,17 @@ import { Draggable } from "gsap/Draggable";
 import { EchoUtils } from "@/utils/Utiliteis";
 import CallPlaceholder from "./CallPlaceholder";
 import gsap from "gsap";
+import { types } from "mediasoup-client";
+import { produceMedia } from "@/utils/mediasoup/helpers";
 
 const LocalStream = ({
   stream,
   echoUtils,
+  producerTransport,
 }: {
   stream: MediaStream | null;
   echoUtils: EchoUtils;
+  producerTransport: types.Transport;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const screenShareRef = useRef<HTMLVideoElement>(null);
@@ -22,6 +26,7 @@ const LocalStream = ({
     (state: stateType) => state.members.members
   );
   const [audio, setAudio] = useState<MediaStream>();
+  const [screenProducer, setScreenProducer] = useState<types.Producer>();
 
   useEffect(() => {
     if (stream) {
@@ -83,17 +88,31 @@ const LocalStream = ({
 
   useEffect(() => {
     if (localScreenShared) {
-      const vt = stream
+      const screenTrack = stream
         ?.getVideoTracks()
         .find((t) => t.getSettings().displaySurface) as MediaStreamTrack;
-      if (vt) {
-        const screenShareStream = new MediaStream([vt]);
+      if (screenTrack) {
+        const screenShareStream = new MediaStream([screenTrack]);
         screenShareRef.current!.srcObject = screenShareStream;
+        (async () => {
+          const screenProducer = await produceMedia(
+            producerTransport,
+            screenTrack,
+            "screen"
+          );
+          setScreenProducer(screenProducer);
+        })();
       }
     } else {
       gsap.to(".draggable", { x: 0, y: 0, duration: 0 });
     }
   }, [localScreenShared]);
+
+  useEffect(() => {
+    return () => {
+      screenProducer?.close();
+    };
+  }, [screenProducer]);
 
   return (
     <div className={`localContainer relative grid-item overflow-hidden`}>

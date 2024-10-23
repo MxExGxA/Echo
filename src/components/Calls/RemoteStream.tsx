@@ -7,20 +7,20 @@ import { EchoUtils } from "@/utils/Utiliteis";
 import CallPlaceholder from "./CallPlaceholder";
 import gsap from "gsap";
 import { types } from "mediasoup-client";
+import { consumeMedia } from "@/utils/mediasoup/helpers";
+import { mediaType } from "@/utils/types";
 
 const RemoteStream = ({
   className,
   echoUtils,
   consumerTransport,
   device,
-  // peer,
   id,
 }: {
   className?: string;
   echoUtils: EchoUtils;
   consumerTransport: types.Transport;
   device: types.Device;
-  // peer: peerType;
   id: string;
 }) => {
   const [toggleVideo, setToggleVideo] = useState<boolean>(false);
@@ -39,10 +39,13 @@ const RemoteStream = ({
     (state: stateType) => state.producers.producers
   );
 
+  const mediaConfRef = useRef<mediaType>();
+
   useEffect(() => {
     mediaSelector.forEach((media) => {
       if (Object.entries(media)[0][0] === id) {
         const mediaConf = Object.entries(media)[0][1];
+        mediaConfRef.current = mediaConf;
         setToggleVideo(mediaConf.camera.toggle);
         setToggleAudio(mediaConf.mic.toggle);
         setRemoteScreenShared(mediaConf.screen.toggle);
@@ -77,115 +80,70 @@ const RemoteStream = ({
     }
   }, [toggleAudio]);
 
+  //when another user joins
   useEffect(() => {
     echoUtils.echoSocket.on("incommingMedia", async (opts) => {
       if (consumerTransport && opts.memberID === id) {
-        echoUtils.echoSocket.emit(
-          "consume",
-          {
-            rtpCapabilities: device!.rtpCapabilities,
-            producerId: opts.producerId,
-          },
-          async ({
-            consumerId,
-            producerId,
-            kind,
-            rtpParameters,
-            error,
-          }: {
-            consumerId: string;
-            producerId: string;
-            kind: types.MediaKind;
-            rtpParameters: types.RtpParameters;
-            error: any;
-          }) => {
-            if (error) {
-              return;
-            }
+        console.log("incomming media", opts);
 
-            const consumer = await consumerTransport?.consume({
-              id: consumerId,
-              producerId: producerId,
-              kind,
-              rtpParameters,
-            });
-
-            if (consumer) {
-              if (consumer.kind === "audio") {
-                const audioStream = new MediaStream();
-                audioStream.addTrack(consumer.track);
-                audioRef.current!.srcObject = audioStream;
-                setAudio(audioStream);
-              }
-              if (consumer.kind === "video") {
-                const videoStream = new MediaStream();
-                videoStream.addTrack(consumer.track);
-                videoRef.current!.srcObject = videoStream;
-              }
-            }
-            echoUtils.echoSocket.emit("resumeConsumer");
-          }
+        const consumer = await consumeMedia(
+          echoUtils.echoSocket,
+          device,
+          consumerTransport,
+          opts.producerId as string
         );
+
+        if (consumer) {
+          if (consumer.kind === "audio") {
+            const audioStream = new MediaStream();
+            audioStream.addTrack(consumer.track);
+            audioRef.current!.srcObject = audioStream;
+            setAudio(audioStream);
+          }
+          if (consumer.kind === "video") {
+            const videoStream = new MediaStream();
+            videoStream.addTrack(consumer.track);
+            if (opts.appData.trackType === "screen") {
+              screenShareRef.current!.srcObject = videoStream;
+            } else {
+              videoRef.current!.srcObject = videoStream;
+            }
+          }
+        }
       }
     });
   }, [consumerTransport]);
 
+  //when this user joins
   useEffect(() => {
     const producersArr = producers[id];
-    console.log("=================<<<<<<<<<>>>>>>>>>", device);
-    console.log("=================<<<<<<<<<>>>>>>>>>", consumerTransport);
-
     if (producersArr && device && consumerTransport) {
-      producersArr.forEach((producer) => {
-        console.log(producer);
-
-        echoUtils.echoSocket.emit(
-          "consume",
-          {
-            rtpCapabilities: device.rtpCapabilities,
-            producerId: producer,
-          },
-          async ({
-            consumerId,
-            producerId,
-            kind,
-            rtpParameters,
-            error,
-          }: {
-            consumerId: string;
-            producerId: string;
-            kind: types.MediaKind;
-            rtpParameters: types.RtpParameters;
-            error: any;
-          }) => {
-            if (error) {
-              return;
-            }
-            console.log("triggered!!!!!!!!!");
-
-            const consumer = await consumerTransport?.consume({
-              id: consumerId,
-              producerId: producerId,
-              kind,
-              rtpParameters,
-            });
-
-            if (consumer) {
-              if (consumer.kind === "audio") {
-                const audioStream = new MediaStream();
-                audioStream.addTrack(consumer.track);
-                audioRef.current!.srcObject = audioStream;
-                setAudio(audioStream);
-              }
-              if (consumer.kind === "video") {
-                const videoStream = new MediaStream();
-                videoStream.addTrack(consumer.track);
-                videoRef.current!.srcObject = videoStream;
-              }
-            }
-            echoUtils.echoSocket.emit("resumeConsumer");
-          }
+      producersArr.forEach(async (producer) => {
+        const consumer = await consumeMedia(
+          echoUtils.echoSocket,
+          device,
+          consumerTransport,
+          producer?.id as string
         );
+
+        if (consumer) {
+          if (consumer.kind === "audio") {
+            const audioStream = new MediaStream();
+            audioStream.addTrack(consumer.track);
+            audioRef.current!.srcObject = audioStream;
+            setAudio(audioStream);
+          }
+          if (consumer.kind === "video") {
+            const videoStream = new MediaStream();
+            videoStream.addTrack(consumer.track);
+            console.log(producer?.appData);
+            if (producer?.appData === "screen") {
+              screenShareRef.current!.srcObject = videoStream;
+            } else {
+              videoRef.current!.srcObject = videoStream;
+            }
+          }
+        }
       });
     }
   }, [producers, device, consumerTransport]);
