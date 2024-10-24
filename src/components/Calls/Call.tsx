@@ -190,8 +190,11 @@ const Call = ({
         echoUtils.echoSocket.emit(
           "restartIce",
           { type: "producer" },
-          (response: any) => {
-            producerTransport.restartIce(response.iceParams);
+          async (response: any) => {
+            await producerTransport.restartIce({
+              iceParameters: response.iceParams,
+            });
+            console.log("ice params:", response);
           }
         );
       }
@@ -227,8 +230,11 @@ const Call = ({
         echoUtils.echoSocket.emit(
           "restartIce",
           { type: "consumer" },
-          (response: any) => {
-            consumerTransport.restartIce(response.iceParams);
+          async (response: any) => {
+            await consumerTransport.restartIce({
+              iceParameters: response.iceParams,
+            });
+            console.log("ice params:", response);
           }
         );
       }
