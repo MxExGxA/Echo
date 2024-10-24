@@ -148,10 +148,13 @@ const Call = ({
           },
           (response: any) => {
             console.log("producer transport connection:", response);
+            if (response.status === "success") {
+              // Call the callback when DTLS connection is established
+              callback();
+              console.log("producer connected");
+            }
           }
         );
-        // Call the callback when DTLS connection is established
-        callback();
       });
 
       producerTransport.on("produce", (opts, callback) => {
@@ -207,12 +210,13 @@ const Call = ({
           },
           (response: any) => {
             console.log("consumer transport connection:", response);
+            if (response.status === "success") {
+              // Call the callback when DTLS connection is established
+              callback();
+              console.log("consumer connected");
+            }
           }
         );
-
-        // Call the callback when DTLS connection is established
-        callback();
-        console.log("consumer connected");
       });
     }
 
