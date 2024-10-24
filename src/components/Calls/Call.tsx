@@ -30,8 +30,12 @@ const Call = ({
   const [device, setDevice] = useState<types.Device>();
   // const producerTransport = useRef<types.Transport>();
   const [producerTransport, setProducerTransport] = useState<types.Transport>();
+  const [prodTransportOpts, setProdTransportOpts] =
+    useState<types.TransportOptions>();
   // const consumerTransport = useRef<types.Transport>();
   const [consumerTransport, setConsumerTransport] = useState<types.Transport>();
+  const [consTransportOpts, setConsTransportOpts] =
+    useState<types.TransportOptions>();
   const producers = useRef<types.Producer[]>();
   // const consumers = useRef<types.Consumer[]>();
   const members = useSelector((state: stateType) => state.members.members);
@@ -115,6 +119,7 @@ const Call = ({
       echoUtils.echoSocket.emit(
         "createProducerTransport",
         async (transportOptions: types.TransportOptions) => {
+          setProdTransportOpts(transportOptions);
           const prodTransport = await createProducerTransport(
             device,
             transportOptions
@@ -126,6 +131,7 @@ const Call = ({
       echoUtils.echoSocket.emit(
         "createConsumerTransport",
         async (transportOptions: types.TransportOptions) => {
+          setConsTransportOpts(transportOptions);
           const consTransport = await createConsumerTransport(
             device,
             transportOptions
@@ -180,8 +186,16 @@ const Call = ({
       }
     }
 
-    producerTransport?.on("connectionstatechange", (opts) => {
-      console.log("producer Transport connection state:", opts);
+    producerTransport?.on("connectionstatechange", async (stat) => {
+      console.log("producer Transport connection state:", stat);
+      if (stat === "failed" || stat === "disconnected") {
+        producerTransport.close();
+        const newProdTransport = await createProducerTransport(
+          device,
+          prodTransportOpts
+        );
+        setProducerTransport(newProdTransport);
+      }
     });
   }, [producerTransport, localStream]);
 
@@ -206,8 +220,16 @@ const Call = ({
       });
     }
 
-    consumerTransport?.on("connectionstatechange", (opts) => {
-      console.log("consumer transport connection state:", opts);
+    consumerTransport?.on("connectionstatechange", async (stat) => {
+      console.log("consumer Transport connection state:", stat);
+      if (stat === "failed" || stat === "disconnected") {
+        consumerTransport.close();
+        const newConsTransport = await createProducerTransport(
+          device,
+          consTransportOpts
+        );
+        setConsumerTransport(newConsTransport);
+      }
     });
   }, [consumerTransport]);
 
