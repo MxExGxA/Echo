@@ -31,11 +31,13 @@ export const Ping = ({
   };
 
   useEffect(() => {
-    if (transport?.connectionState === "connected") {
+    if (transport) {
       //set ping interval
       const i = setInterval(async () => {
-        const ping = await getCallMs(transport);
-        setPing(ping);
+        if (transport.connectionState === "connected") {
+          const ping = await getCallMs(transport);
+          setPing(ping);
+        }
       }, 2000);
 
       setIntervals((prev) => [...prev, i]);
