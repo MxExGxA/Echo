@@ -128,22 +128,6 @@ const Call = ({
                   }
                 );
               });
-
-              const streamTracks = localStreamRef.current?.getTracks();
-
-              if (streamTracks) {
-                streamTracks.forEach(async (track) => {
-                  if (track && producerTransport.current) {
-                    const producer = await produceMedia(
-                      producerTransport.current,
-                      track
-                    );
-                    console.log(producer?.id);
-
-                    producers.current?.push(producer as types.Producer);
-                  }
-                });
-              }
             }
           );
 
@@ -188,6 +172,22 @@ const Call = ({
   }, []);
 
   useEffect(() => {
+    if (localStream && producerTransport.current) {
+      const streamTracks = localStream.getTracks();
+      if (streamTracks) {
+        streamTracks.forEach(async (track) => {
+          if (track && producerTransport.current) {
+            const producer = await produceMedia(
+              producerTransport.current,
+              track
+            );
+            console.log(producer?.id);
+
+            producers.current?.push(producer as types.Producer);
+          }
+        });
+      }
+    }
     return () => {
       localStream?.getTracks().forEach((track) => track.stop());
     };
