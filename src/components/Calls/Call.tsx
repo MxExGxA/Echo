@@ -20,12 +20,11 @@ const Call = ({
 }) => {
   gsap.registerPlugin(Draggable);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const localStreamRef = useRef<MediaStream>();
   const [micPermission, setMicPermission] = useState<boolean>(false);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
-  const [deviceState, setDeviceState] = useState<types.Device>();
-  const [prodTransport, setProdTransport] = useState<types.Transport>();
-  const localStreamRef = useRef<MediaStream>();
   const deviceRef = useRef<types.Device>();
+  const [deviceState, setDeviceState] = useState<types.Device>();
   const producerTransport = useRef<types.Transport>();
   const consumerTransport = useRef<types.Transport>();
   const [consumerTransportState, setConsumerTransportState] =
@@ -96,7 +95,6 @@ const Call = ({
             async (transportOptions: types.TransportOptions) => {
               producerTransport.current =
                 deviceRef.current!.createSendTransport(transportOptions);
-              setProdTransport(producerTransport.current);
 
               //connect the producer transport
               producerTransport.current.on(
@@ -130,6 +128,22 @@ const Call = ({
                   }
                 );
               });
+
+              const streamTracks = localStreamRef.current?.getTracks();
+
+              if (streamTracks) {
+                streamTracks.forEach(async (track) => {
+                  if (track && producerTransport.current) {
+                    const producer = await produceMedia(
+                      producerTransport.current,
+                      track
+                    );
+                    console.log(producer?.id);
+
+                    producers.current?.push(producer as types.Producer);
+                  }
+                });
+              }
             }
           );
 
@@ -174,23 +188,10 @@ const Call = ({
   }, []);
 
   useEffect(() => {
-    if (localStream && prodTransport) {
-      const streamTracks = localStream.getTracks();
-      if (streamTracks) {
-        streamTracks.forEach(async (track) => {
-          if (track && prodTransport) {
-            const producer = await produceMedia(prodTransport, track);
-            console.log(producer?.id);
-
-            producers.current?.push(producer as types.Producer);
-          }
-        });
-      }
-    }
     return () => {
       localStream?.getTracks().forEach((track) => track.stop());
     };
-  }, [localStream, prodTransport]);
+  }, [localStream]);
 
   return (
     <div
