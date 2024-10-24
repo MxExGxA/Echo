@@ -92,7 +92,6 @@ const Call = ({
           });
 
           setDevice(device);
-          //create producer transport
         }
       );
       echoUtils.echoSocket.on("memberJoined", async (opts) => {
@@ -185,7 +184,7 @@ const Call = ({
 
     producerTransport?.on("connectionstatechange", async (stat) => {
       console.log("producer Transport connection state:", stat);
-      if (stat === "failed" || stat === "disconnected") {
+      if (stat === "failed") {
         console.log("restarting ice----------------");
         echoUtils.echoSocket.emit(
           "restartIce",
@@ -194,7 +193,6 @@ const Call = ({
             await producerTransport.restartIce({
               iceParameters: response.iceParams,
             });
-            console.log("ice params:", response);
           }
         );
       }
@@ -225,7 +223,7 @@ const Call = ({
 
     consumerTransport?.on("connectionstatechange", async (stat) => {
       console.log("consumer Transport connection state:", stat);
-      if (stat === "failed" || stat === "disconnected") {
+      if (stat === "failed") {
         console.log("restarting ice----------------");
         echoUtils.echoSocket.emit(
           "restartIce",
