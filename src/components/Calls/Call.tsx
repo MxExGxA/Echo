@@ -9,7 +9,11 @@ import gsap from "gsap";
 import { Device, types } from "mediasoup-client";
 import { useSelector } from "react-redux";
 import { stateType } from "@/redux/store";
-import { produceMedia } from "@/utils/mediasoup/helpers";
+import {
+  createConsumerTransport,
+  createProducerTransport,
+  produceMedia,
+} from "@/utils/mediasoup/helpers";
 
 const Call = ({
   editorToggled,
@@ -23,12 +27,11 @@ const Call = ({
   const localStreamRef = useRef<MediaStream>();
   const [micPermission, setMicPermission] = useState<boolean>(false);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
-  const deviceRef = useRef<types.Device>();
-  const [deviceState, setDeviceState] = useState<types.Device>();
-  const producerTransport = useRef<types.Transport>();
-  const consumerTransport = useRef<types.Transport>();
-  const [consumerTransportState, setConsumerTransportState] =
-    useState<types.Transport>();
+  const [device, setDevice] = useState<types.Device>();
+  // const producerTransport = useRef<types.Transport>();
+  const [producerTransport, setProducerTransport] = useState<types.Transport>();
+  // const consumerTransport = useRef<types.Transport>();
+  const [consumerTransport, setConsumerTransport] = useState<types.Transport>();
   const producers = useRef<types.Producer[]>();
   // const consumers = useRef<types.Consumer[]>();
   const members = useSelector((state: stateType) => state.members.members);
@@ -82,100 +85,14 @@ const Call = ({
         "getRouterRtpCapabilities",
         async (rtpCapabilities: types.RtpCapabilities) => {
           //create a new device
-          deviceRef.current = new Device();
+          const device = new Device();
           //load the device with rtp capabilities
-          await deviceRef.current.load({
+          await device.load({
             routerRtpCapabilities: rtpCapabilities,
           });
 
-          setDeviceState(deviceRef.current);
+          setDevice(device);
           //create producer transport
-          echoUtils.echoSocket.emit(
-            "createProducerTransport",
-            async (transportOptions: types.TransportOptions) => {
-              producerTransport.current =
-                deviceRef.current!.createSendTransport(transportOptions);
-
-              //connect the producer transport
-              producerTransport.current.on(
-                "connect",
-                ({ dtlsParameters }, callback) => {
-                  // Send the DTLS parameters to the server
-                  echoUtils.echoSocket.emit(
-                    "connectProducerTransport",
-                    {
-                      dtlsParameters,
-                    },
-                    (response: any) => {
-                      console.log("producer transport connection:", response);
-                    }
-                  );
-                  // Call the callback when DTLS connection is established
-                  callback();
-                }
-              );
-
-              producerTransport.current.on("produce", (opts, callback) => {
-                echoUtils.echoSocket.emit(
-                  "produce",
-                  {
-                    kind: opts.kind,
-                    appData: opts.appData,
-                    rtpParameters: opts.rtpParameters,
-                  },
-                  (producerId: string) => {
-                    callback({ id: producerId });
-                  }
-                );
-              });
-
-              const streamTracks = localStreamRef.current?.getTracks();
-
-              if (streamTracks) {
-                streamTracks.forEach(async (track) => {
-                  if (track && producerTransport.current) {
-                    const producer = await produceMedia(
-                      producerTransport.current,
-                      track
-                    );
-                    console.log(producer?.id);
-
-                    producers.current?.push(producer as types.Producer);
-                  }
-                });
-              }
-            }
-          );
-
-          echoUtils.echoSocket.emit(
-            "createConsumerTransport",
-            async (transportOptions: types.TransportOptions) => {
-              consumerTransport.current =
-                deviceRef.current!.createRecvTransport(transportOptions);
-              setConsumerTransportState(consumerTransport.current);
-
-              consumerTransport.current.on(
-                "connect",
-                ({ dtlsParameters }, callback) => {
-                  // Send the DTLS parameters to the server
-                  console.log("connecting consmer transport");
-                  echoUtils.echoSocket.emit(
-                    "connectConsumerTransport",
-                    {
-                      dtlsParameters,
-                    },
-                    (response: any) => {
-                      console.log("consumer transport connection:", response);
-                    }
-                  );
-
-                  // Call the callback when DTLS connection is established
-                  callback();
-                  console.log("consumer connected");
-                }
-              );
-            }
-          );
         }
       );
       echoUtils.echoSocket.on("memberJoined", async (opts) => {
@@ -192,6 +109,99 @@ const Call = ({
       localStream?.getTracks().forEach((track) => track.stop());
     };
   }, [localStream]);
+
+  useEffect(() => {
+    if (device) {
+      echoUtils.echoSocket.emit(
+        "createProducerTransport",
+        async (transportOptions: types.TransportOptions) => {
+          const prodTransport = await createProducerTransport(
+            device,
+            transportOptions
+          );
+          setProducerTransport(prodTransport);
+        }
+      );
+
+      echoUtils.echoSocket.emit(
+        "createConsumerTransport",
+        async (transportOptions: types.TransportOptions) => {
+          const consTransport = await createConsumerTransport(
+            device,
+            transportOptions
+          );
+          setConsumerTransport(consTransport);
+        }
+      );
+    }
+  }, [device]);
+
+  useEffect(() => {
+    if (producerTransport && localStream) {
+      //connect the producer transport
+      producerTransport.on("connect", ({ dtlsParameters }, callback) => {
+        // Send the DTLS parameters to the server
+        echoUtils.echoSocket.emit(
+          "connectProducerTransport",
+          {
+            dtlsParameters,
+          },
+          (response: any) => {
+            console.log("producer transport connection:", response);
+          }
+        );
+        // Call the callback when DTLS connection is established
+        callback();
+      });
+
+      producerTransport.on("produce", (opts, callback) => {
+        echoUtils.echoSocket.emit(
+          "produce",
+          {
+            kind: opts.kind,
+            appData: opts.appData,
+            rtpParameters: opts.rtpParameters,
+          },
+          (producerId: string) => {
+            callback({ id: producerId });
+          }
+        );
+      });
+
+      const streamTracks = localStream.getTracks();
+
+      if (streamTracks) {
+        streamTracks.forEach(async (track) => {
+          if (track && producerTransport) {
+            const producer = await produceMedia(producerTransport, track);
+            producers.current?.push(producer as types.Producer);
+          }
+        });
+      }
+    }
+  }, [producerTransport, localStream]);
+
+  useEffect(() => {
+    if (consumerTransport) {
+      consumerTransport.on("connect", ({ dtlsParameters }, callback) => {
+        // Send the DTLS parameters to the server
+        console.log("connecting consmer transport");
+        echoUtils.echoSocket.emit(
+          "connectConsumerTransport",
+          {
+            dtlsParameters,
+          },
+          (response: any) => {
+            console.log("consumer transport connection:", response);
+          }
+        );
+
+        // Call the callback when DTLS connection is established
+        callback();
+        console.log("consumer connected");
+      });
+    }
+  }, [consumerTransport]);
 
   return (
     <div
@@ -214,7 +224,7 @@ const Call = ({
         <LocalStream
           stream={localStream}
           echoUtils={echoUtils}
-          producerTransport={producerTransport.current as types.Transport}
+          producerTransport={producerTransport as types.Transport}
         />
         {members.map(
           (member, index) =>
@@ -223,8 +233,8 @@ const Call = ({
                 key={member.id}
                 echoUtils={echoUtils}
                 id={member.id}
-                consumerTransport={consumerTransportState as types.Transport}
-                device={deviceState as types.Device}
+                consumerTransport={consumerTransport as types.Transport}
+                device={device as types.Device}
                 className={`${
                   index === 2 && members.length === 3 ? "third-grid-item" : ""
                 }`}

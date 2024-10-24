@@ -62,3 +62,31 @@ export const consumeMedia = (
     );
   });
 };
+
+export const createProducerTransport = (
+  device: types.Device,
+  transportOpts: types.TransportOptions
+): Promise<types.Transport> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const transport = device.createSendTransport(transportOpts);
+      resolve(transport);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const createConsumerTransport = (
+  device: types.Device,
+  transportOpts: types.TransportOptions
+): Promise<types.Transport> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const transport = device.createRecvTransport(transportOpts);
+      resolve(transport);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
