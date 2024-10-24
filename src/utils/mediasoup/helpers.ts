@@ -43,7 +43,6 @@ export const consumeMedia = (
         rtpParameters: types.RtpParameters;
         error: any;
       }) => {
-        console.log("try to consume !");
         if (error) {
           throw new Error(error);
         }

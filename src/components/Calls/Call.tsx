@@ -179,6 +179,10 @@ const Call = ({
         });
       }
     }
+
+    producerTransport?.on("connectionstatechange", (opts) => {
+      console.log("producer Transport connection state:", opts);
+    });
   }, [producerTransport, localStream]);
 
   useEffect(() => {
@@ -201,6 +205,10 @@ const Call = ({
         console.log("consumer connected");
       });
     }
+
+    consumerTransport?.on("connectionstatechange", (opts) => {
+      console.log("consumer transport connection state:", opts);
+    });
   }, [consumerTransport]);
 
   return (
