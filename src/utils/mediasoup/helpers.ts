@@ -45,7 +45,7 @@ export const consumeMedia = (
       }) => {
         console.log("try to consume !");
         if (error) {
-          return;
+          throw new Error(error);
         }
         try {
           const consumer = await consumerTransport?.consume({
