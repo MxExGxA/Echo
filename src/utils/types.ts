@@ -64,7 +64,11 @@ export type mediaType = {
 };
 
 export interface producersType {
-  [id: string]: ({ id: string; appData: { trackType: string } } | null)[];
+  [id: string]: ({
+    id: string;
+    appData: { trackType: string };
+    kind: "audio" | "video";
+  } | null)[];
 }
 
 export type statusType = {

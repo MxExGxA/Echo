@@ -7,6 +7,7 @@ import CallPlaceholder from "./CallPlaceholder";
 import gsap from "gsap";
 import { types } from "mediasoup-client";
 import { produceMedia } from "@/utils/mediasoup/helpers";
+import { Ping } from "./Ping";
 
 const LocalStream = ({
   stream,
@@ -117,7 +118,10 @@ const LocalStream = ({
   return (
     <div className={`localContainer relative grid-item overflow-hidden`}>
       {/* Camera and placeholder */}
-
+      <Ping
+        className="absolute left-5 bottom-5 z-20"
+        transport={producerTransport}
+      />
       <div
         className={`draggable absolute w-full h-full  overflow-hidden z-10 ${
           localScreenShared

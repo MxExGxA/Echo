@@ -9,6 +9,8 @@ import gsap from "gsap";
 import { types } from "mediasoup-client";
 import { consumeMedia } from "@/utils/mediasoup/helpers";
 import { mediaType } from "@/utils/types";
+import { Icon } from "@iconify/react";
+import { Ping } from "./Ping";
 
 const RemoteStream = ({
   className,
@@ -28,6 +30,10 @@ const RemoteStream = ({
   const [memberName, setMemberName] = useState<string>("");
   const [audio, setAudio] = useState<MediaStream>();
   const [remoteScreenShared, setRemoteScreenShared] = useState<boolean>(false);
+  const [mediaLoading, setMediaLoading] = useState<{
+    audio: boolean;
+    video: boolean;
+  }>({ audio: false, video: false });
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const screenShareRef = useRef<HTMLVideoElement>(null);
@@ -38,7 +44,6 @@ const RemoteStream = ({
   const producers = useSelector(
     (state: stateType) => state.producers.producers
   );
-
   const mediaConfRef = useRef<mediaType>();
 
   useEffect(() => {
@@ -85,7 +90,7 @@ const RemoteStream = ({
     echoUtils.echoSocket.on("incommingMedia", async (opts) => {
       if (consumerTransport && opts.memberID === id) {
         console.log("incomming media", opts);
-
+        setMediaLoading((prev) => ({ ...prev, [opts.kind]: true }));
         const consumer = await consumeMedia(
           echoUtils.echoSocket,
           device,
@@ -99,6 +104,7 @@ const RemoteStream = ({
             audioStream.addTrack(consumer.track);
             audioRef.current!.srcObject = audioStream;
             setAudio(audioStream);
+            setMediaLoading((prev) => ({ ...prev, audio: false }));
           }
           if (consumer.kind === "video") {
             const videoStream = new MediaStream();
@@ -108,6 +114,7 @@ const RemoteStream = ({
             } else {
               videoRef.current!.srcObject = videoStream;
             }
+            setMediaLoading((prev) => ({ ...prev, video: false }));
           }
         }
       }
@@ -119,6 +126,10 @@ const RemoteStream = ({
     const producersArr = producers[id];
     if (producersArr && device && consumerTransport) {
       producersArr.forEach(async (producer) => {
+        setMediaLoading((prev) => ({
+          ...prev,
+          [producer?.kind as string]: true,
+        }));
         const consumer = await consumeMedia(
           echoUtils.echoSocket,
           device,
@@ -132,6 +143,7 @@ const RemoteStream = ({
             audioStream.addTrack(consumer.track);
             audioRef.current!.srcObject = audioStream;
             setAudio(audioStream);
+            setMediaLoading((prev) => ({ ...prev, audio: false }));
           }
           if (consumer.kind === "video") {
             const videoStream = new MediaStream();
@@ -141,6 +153,7 @@ const RemoteStream = ({
             } else {
               videoRef.current!.srcObject = videoStream;
             }
+            setMediaLoading((prev) => ({ ...prev, video: false }));
           }
         }
       });
@@ -149,9 +162,27 @@ const RemoteStream = ({
 
   return (
     <div
-      className={`remoteContainer${id} relative grid-item overflow-hidden ${className}`}
+      className={`remoteContainer${id} relative grid-item overflow-hidden  ${className}`}
     >
+      <div className="absolute left-2 bottom-2 text-white z-40">
+        {mediaLoading.audio && (
+          <div className="flex items-center">
+            <p className="mr-2 text-sm">loading audio</p>
+            <Icon icon="line-md:loading-twotone-loop"></Icon>
+          </div>
+        )}
+        {mediaLoading.video && (
+          <div className="flex items-center">
+            <p className="mr-2 text-sm">loading video</p>
+            <Icon icon="line-md:loading-twotone-loop"></Icon>
+          </div>
+        )}
+      </div>
       <p className="absolute text-white right-5 top-5 z-20">{memberName}</p>
+      <Ping
+        className="absolute left-5 bottom-5 z-20"
+        transport={consumerTransport}
+      />
       {!toggleAudio && (
         <CiMicrophoneOff className="absolute top-5 left-5 text-main-red text-3xl z-40" />
       )}
