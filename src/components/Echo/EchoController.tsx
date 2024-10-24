@@ -80,6 +80,7 @@ const EchoController = () => {
         dispatch(setMembers(opts.members));
         dispatch(setMessages(opts.messages));
       });
+
       socket.on("joinRequestApproved", (opts) => {
         updateStatus("joined", true);
         dispatch(setMembers(opts.members));
@@ -89,6 +90,11 @@ const EchoController = () => {
 
         clearTimeout(timeOutRef.current);
       });
+      socket.on("makeAdmin", (opts) => {
+        dispatch(setMembers(opts.members));
+        dispatch(setMessages(opts.messages));
+      });
+
       socket.on("memberJoined", (opts) => {
         dispatch(setMembers(opts.members));
         dispatch(setMessages(opts.messages));

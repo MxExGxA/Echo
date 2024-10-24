@@ -8,6 +8,8 @@ import { useSelector } from "react-redux";
 import { EchoUtils } from "@/utils/Utiliteis";
 import Notify from "../Notify/Notify";
 import ToggleButton from "../Buttons/ToggleButton";
+import { GiBootKick } from "react-icons/gi";
+import { MdAdminPanelSettings } from "react-icons/md";
 
 const Members = ({ echoUtils }: { echoUtils: EchoUtils }) => {
   const [toggleMembers, setToggleMembers] = useState<boolean>(false);
@@ -24,6 +26,10 @@ const Members = ({ echoUtils }: { echoUtils: EchoUtils }) => {
     message: "",
     type: "",
   });
+
+  const handleMakeAdmin = (member: Member) => {
+    echoUtils.makeAdmin(echoUtils.echoID, member);
+  };
 
   const handleKickMember = (member: Member): void => {
     if (amIAdmin) {
@@ -93,12 +99,23 @@ const Members = ({ echoUtils }: { echoUtils: EchoUtils }) => {
                     )}
                   </li>
                   {!member.isAdmin && amIAdmin && (
-                    <button
-                      onClick={() => handleKickMember(member)}
-                      className="text-sm text-main-red"
-                    >
-                      Kick
-                    </button>
+                    <div className="flex items-center">
+                      <button
+                        className="text-xl text-main-blue mx-1"
+                        onClick={() => handleMakeAdmin(member)}
+                        title="Promote member to admin"
+                      >
+                        <MdAdminPanelSettings />
+                      </button>
+                      {"|"}
+                      <button
+                        onClick={() => handleKickMember(member)}
+                        className="text-xl text-main-red mx-1"
+                        title="kick member"
+                      >
+                        <GiBootKick />
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}

@@ -37,6 +37,12 @@ export class EchoUtils {
       this.messages = opts.messages;
       this.adminId = opts.members.find((member: Admin) => member.isAdmin).id;
     });
+
+    socket.on("makeAdmin", (opts) => {
+      this.members = opts.members;
+      this.messages = opts.messages;
+      this.adminId = opts.members.find((member: Admin) => member.isAdmin).id;
+    });
   }
 
   createEcho(echoID: string, creator: Member): boolean | void {
@@ -94,6 +100,15 @@ export class EchoUtils {
 
   listMembers(): Member[] {
     return this.members;
+  }
+
+  makeAdmin(echoID: string, member: Member): boolean | void {
+    try {
+      this.socket.emit("makeAdmin", { echoID, member });
+      return true;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   kickMember(echoID: string, member: Member): boolean | void {

@@ -12,7 +12,8 @@ import { EchoUtils } from "@/utils/Utiliteis";
 import Message from "./Message";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import Notify from "../Notify/Notify";
+import Notify from "@/components/Notify/Notify";
+import msgSound from "@/assets/sounds/msg.wav";
 
 const Messaging = ({ echoUtils }: { echoUtils: EchoUtils }) => {
   const [toggleMessages, setToggleMessages] = useState<boolean>(false);
@@ -123,22 +124,29 @@ const Messaging = ({ echoUtils }: { echoUtils: EchoUtils }) => {
   useEffect(() => {
     if (toggleMessages) {
       setUnread(false);
+      messagesBodyRef.current?.scroll({
+        top: messagesBodyRef.current.scrollHeight,
+      });
       messagesinputRef.current?.focus();
     }
   }, [toggleMessages]);
 
   useEffect(() => {
     //scroll down on new message
+    const audio = new Audio(msgSound);
     messagesBodyRef.current?.scroll({
       top: messagesBodyRef.current.scrollHeight,
     });
     if (
       !toggleMessages &&
-      messagesSelector.messages[messagesSelector.messages.length - 1].type ===
-        "chat"
+      messagesSelector.messages[messagesSelector.messages.length - 1].type !==
+        "info"
     ) {
       setUnread(true);
+      audio.play();
     }
+
+    return () => audio.remove();
   }, [messagesSelector]);
 
   return (

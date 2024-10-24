@@ -64,12 +64,16 @@ const Message = ({
         {link ? (
           <div className="text-main-blue">
             {!isImage && !isVideo ? (
-              <a href={link} target="_blank" className="flex items-center">
+              <a
+                href={link}
+                target="_blank"
+                className="flex items-center break-all"
+              >
                 {message.message.split("::")[0]}{" "}
                 <FiExternalLink className="ml-2 flex-shrink-0" />
               </a>
             ) : (
-              <div className="relative border-8 rounded-md border-main-blue">
+              <div className="relative border-8 rounded-md border-main-blue w-fit">
                 <a
                   title="donwload"
                   href={link}
