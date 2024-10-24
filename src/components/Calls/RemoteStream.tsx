@@ -97,6 +97,7 @@ const RemoteStream = ({
           consumerTransport,
           opts.producerId as string
         );
+        console.log("CONSUMER ===>>", consumer);
 
         if (consumer) {
           if (consumer.kind === "audio") {
@@ -184,7 +185,7 @@ const RemoteStream = ({
         transport={consumerTransport}
       />
       {!toggleAudio && (
-        <CiMicrophoneOff className="absolute top-5 left-5 text-main-red text-3xl z-40" />
+        <CiMicrophoneOff className="absolute top-5 left-5 text-main-red text-3xl z-20" />
       )}
       {/* camera and placeholder */}
       <div
@@ -196,7 +197,9 @@ const RemoteStream = ({
       >
         <video
           ref={videoRef}
-          className={`absolute z-10 ${toggleVideo ? "" : "hidden"}`}
+          className={`absolute z-10 [transform:rotateY(180deg)] ${
+            toggleVideo ? "" : "hidden"
+          }`}
           autoPlay
           onDoubleClick={() => {
             videoRef.current?.requestFullscreen({ navigationUI: "hide" });

@@ -140,7 +140,9 @@ const LocalStream = ({
         )}
         <video
           ref={videoRef}
-          className={`absolute z-10 ${togglePlaceholder && "hidden"}`}
+          className={`absolute z-10 [transform:rotateY(180deg)] ${
+            togglePlaceholder && "hidden"
+          }`}
           autoPlay
           muted
         />
