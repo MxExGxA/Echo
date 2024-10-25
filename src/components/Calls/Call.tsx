@@ -168,7 +168,7 @@ const Call = ({
 
       // const streamTracks = localStream.getTracks();
       const audioTrack = localStream.getAudioTracks()[0];
-      const videoTrack = localStream.getVideoTracks()[0];
+      // const videoTrack = localStream.getVideoTracks()[0];
 
       // if (streamTracks) {
       //   streamTracks.forEach(async (track) => {
