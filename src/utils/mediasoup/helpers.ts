@@ -8,7 +8,7 @@ export const produceMedia = async (
 ) => {
   try {
     const producer = await transport.produce({
-      track: track as MediaStreamTrack,
+      track,
       appData: { trackType },
     });
     return producer;

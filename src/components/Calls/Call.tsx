@@ -171,7 +171,7 @@ const Call = ({
 
       if (streamTracks) {
         streamTracks.forEach(async (track) => {
-          if (track && producerTransport) {
+          if (track && track.kind === "audio" && producerTransport) {
             const producer = await produceMedia(producerTransport, track);
             producers.current?.push(producer as types.Producer);
           }
@@ -182,17 +182,16 @@ const Call = ({
     producerTransport?.on("connectionstatechange", async (stat) => {
       console.log("producer Transport connection state:", stat);
       if (stat === "failed" || stat === "disconnected") {
-        throw new Error(`Producer Transport Connection Error ${stat}`);
-        // console.log("restarting ice----------------");
-        // echoUtils.echoSocket.emit(
-        //   "restartIce",
-        //   { type: "producer" },
-        //   async (response: any) => {
-        //     await producerTransport.restartIce({
-        //       iceParameters: response.iceParams,
-        //     });
-        //   }
-        // );
+        console.log("restarting ice----------------");
+        echoUtils.echoSocket.emit(
+          "restartIce",
+          { type: "producer" },
+          async (response: any) => {
+            await producerTransport.restartIce({
+              iceParameters: response.iceParams,
+            });
+          }
+        );
       }
     });
   }, [producerTransport, localStream]);
@@ -222,18 +221,17 @@ const Call = ({
     consumerTransport?.on("connectionstatechange", async (stat) => {
       console.log("consumer Transport connection state:", stat);
       if (stat === "failed" || stat === "disconnected") {
-        throw new Error(`Consumer Transport Connection Error ${stat}`);
-        // console.log("restarting ice----------------");
-        // echoUtils.echoSocket.emit(
-        //   "restartIce",
-        //   { type: "consumer" },
-        //   async (response: any) => {
-        //     await consumerTransport.restartIce({
-        //       iceParameters: response.iceParams,
-        //     });
-        //     console.log("ice params:", response);
-        //   }
-        // );
+        console.log("restarting ice----------------");
+        echoUtils.echoSocket.emit(
+          "restartIce",
+          { type: "consumer" },
+          async (response: any) => {
+            await consumerTransport.restartIce({
+              iceParameters: response.iceParams,
+            });
+            console.log("ice params:", response);
+          }
+        );
       }
     });
   }, [consumerTransport]);

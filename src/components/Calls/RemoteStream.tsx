@@ -131,6 +131,7 @@ const RemoteStream = ({
           ...prev,
           [producer?.kind as string]: true,
         }));
+
         const consumer = await consumeMedia(
           echoUtils.echoSocket,
           device,
