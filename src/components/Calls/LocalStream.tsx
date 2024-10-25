@@ -57,8 +57,6 @@ const LocalStream = ({
         audioStream.addTrack(audioTrack);
         setAudio(audioStream);
       }
-
-      console.log("stream", stream);
     }
   }, [stream]);
 

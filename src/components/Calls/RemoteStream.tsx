@@ -1,6 +1,6 @@
 import { stateType } from "@/redux/store";
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Draggable } from "gsap/Draggable";
 import { CiMicrophoneOff } from "react-icons/ci";
 import { EchoUtils } from "@/utils/Utiliteis";
@@ -11,6 +11,7 @@ import { consumeMedia } from "@/utils/mediasoup/helpers";
 import { mediaType } from "@/utils/types";
 import { Icon } from "@iconify/react";
 import { Ping } from "./Ping";
+import { debug } from "@/redux/DebugSlice";
 
 const RemoteStream = ({
   className,
@@ -45,6 +46,11 @@ const RemoteStream = ({
     (state: stateType) => state.producers.producers
   );
   const mediaConfRef = useRef<mediaType>();
+  const dispatch = useDispatch();
+
+  const addDebug = (text: string) => {
+    dispatch(debug(text));
+  };
 
   useEffect(() => {
     mediaSelector.forEach((media) => {
@@ -88,16 +94,18 @@ const RemoteStream = ({
   //when another user joins
   useEffect(() => {
     echoUtils.echoSocket.on("incommingMedia", async (opts) => {
+      addDebug(`incomming media track ${opts.kind}`);
       if (consumerTransport && opts.memberID === id) {
-        console.log("incomming media", opts);
         setMediaLoading((prev) => ({ ...prev, [opts.kind]: true }));
+
         const consumer = await consumeMedia(
           echoUtils.echoSocket,
           device,
           consumerTransport,
           opts.producerId as string
         );
-        console.log("CONSUMER ===>>", consumer);
+
+        addDebug(`${opts?.kind} consumer loaded`);
 
         if (consumer) {
           if (consumer.kind === "audio") {
@@ -131,6 +139,7 @@ const RemoteStream = ({
           ...prev,
           [producer?.kind as string]: true,
         }));
+        addDebug(`incoming media track ${producer?.kind}`);
 
         const consumer = await consumeMedia(
           echoUtils.echoSocket,
@@ -138,6 +147,7 @@ const RemoteStream = ({
           consumerTransport,
           producer?.id as string
         );
+        addDebug(`${producer?.kind} consumer loaded`);
 
         if (consumer) {
           if (consumer.kind === "audio") {

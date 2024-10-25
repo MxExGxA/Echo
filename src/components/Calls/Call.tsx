@@ -14,6 +14,7 @@ import {
   createProducerTransport,
   produceMedia,
 } from "@/utils/mediasoup/helpers";
+import { Debug } from "@/components/Debug";
 
 const Call = ({
   editorToggled,
@@ -91,9 +92,9 @@ const Call = ({
           setDevice(device);
         }
       );
-      echoUtils.echoSocket.on("memberJoined", async (opts) => {
-        console.log(opts);
-      });
+      // echoUtils.echoSocket.on("memberJoined", async (opts) => {
+      //   console.log(opts);
+      // });
 
       // echoUtils.echoSocket.on("memberLeft", (opts) => {});
     })();
@@ -143,11 +144,9 @@ const Call = ({
             dtlsParameters,
           },
           (response: any) => {
-            console.log("producer transport connection:", response);
             if (response.status === "success") {
               // Call the callback when DTLS connection is established
               callback();
-              console.log("producer connected");
             }
           }
         );
@@ -180,12 +179,12 @@ const Call = ({
       //   });
       // }
 
-      if (videoTrack && producerTransport) {
-        (async () => {
-          const producer = await produceMedia(producerTransport, videoTrack);
-          producers.current?.push(producer as types.Producer);
-        })();
-      }
+      // if (videoTrack && producerTransport) {
+      //   (async () => {
+      //     const producer = await produceMedia(producerTransport, videoTrack);
+      //     producers.current?.push(producer as types.Producer);
+      //   })();
+      // }
 
       if (audioTrack && producerTransport) {
         (async () => {
@@ -196,9 +195,8 @@ const Call = ({
     }
 
     producerTransport?.on("connectionstatechange", async (stat) => {
-      console.log("producer Transport connection state:", stat);
       if (stat === "failed" || stat === "disconnected") {
-        console.log("restarting ice----------------");
+        console.log("restarting Producer ice");
         echoUtils.echoSocket.emit(
           "restartIce",
           { type: "producer" },
@@ -216,18 +214,15 @@ const Call = ({
     if (consumerTransport) {
       consumerTransport.on("connect", ({ dtlsParameters }, callback) => {
         // Send the DTLS parameters to the server
-        console.log("connecting consmer transport");
         echoUtils.echoSocket.emit(
           "connectConsumerTransport",
           {
             dtlsParameters,
           },
           (response: any) => {
-            console.log("consumer transport connection:", response);
             if (response.status === "success") {
               // Call the callback when DTLS connection is established
               callback();
-              console.log("consumer connected");
             }
           }
         );
@@ -235,9 +230,8 @@ const Call = ({
     }
 
     consumerTransport?.on("connectionstatechange", async (stat) => {
-      console.log("consumer Transport connection state:", stat);
       if (stat === "failed" || stat === "disconnected") {
-        console.log("restarting ice----------------");
+        console.log("restarting Consumer ice..");
         echoUtils.echoSocket.emit(
           "restartIce",
           { type: "consumer" },
@@ -245,7 +239,6 @@ const Call = ({
             await consumerTransport.restartIce({
               iceParameters: response.iceParams,
             });
-            console.log("ice params:", response);
           }
         );
       }
@@ -262,6 +255,7 @@ const Call = ({
       }}
       className="relative max-h-full max-md:!col-start-1"
     >
+      <Debug />
       <div
         className="video-grid"
         style={{

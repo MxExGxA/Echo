@@ -47,8 +47,6 @@ export class EchoUtils {
 
   createEcho(echoID: string, creator: Member): boolean | void {
     try {
-      console.log("create echo triggered");
-
       this.id = echoID;
       this.socket.emit("createEcho", { echoID, creator });
       return true;

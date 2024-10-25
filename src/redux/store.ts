@@ -4,6 +4,7 @@ import messagesSlice from "./messagesSlice";
 import membersSlice from "./membersSlice";
 import mediaSlice from "./mediaSlice";
 import producersSlice from "./producersSlice";
+import debugSlice from "./DebugSlice";
 const store = configureStore({
   reducer: {
     joinReqs: joinRequestsSlice,
@@ -11,6 +12,7 @@ const store = configureStore({
     messages: messagesSlice,
     media: mediaSlice,
     producers: producersSlice,
+    debug: debugSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
