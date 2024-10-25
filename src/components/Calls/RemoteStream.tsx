@@ -162,20 +162,10 @@ const RemoteStream = ({
     }
   }, [producers, device, consumerTransport]);
 
-  const handlePlayAudio = () => {
-    audioRef.current?.play();
-  };
-
   return (
     <div
       className={`remoteContainer${id} relative grid-item overflow-hidden  ${className}`}
     >
-      <button
-        onClick={handlePlayAudio}
-        className="absolute z-50 bg-green-500 p-10"
-      >
-        Play Audio!!
-      </button>
       <div className="absolute left-2 bottom-2 text-white z-40">
         {mediaLoading.audio && (
           <div className="flex items-center">

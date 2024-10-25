@@ -167,15 +167,31 @@ const Call = ({
         );
       });
 
-      const streamTracks = localStream.getTracks();
+      // const streamTracks = localStream.getTracks();
+      const audioTrack = localStream.getAudioTracks()[0];
+      const videoTrack = localStream.getVideoTracks()[0];
 
-      if (streamTracks) {
-        streamTracks.forEach(async (track) => {
-          if (track && track.kind === "audio" && producerTransport) {
-            const producer = await produceMedia(producerTransport, track);
-            producers.current?.push(producer as types.Producer);
-          }
-        });
+      // if (streamTracks) {
+      //   streamTracks.forEach(async (track) => {
+      //     if (track && producerTransport) {
+      //       const producer = await produceMedia(producerTransport, track);
+      //       producers.current?.push(producer as types.Producer);
+      //     }
+      //   });
+      // }
+
+      if (videoTrack && producerTransport) {
+        (async () => {
+          const producer = await produceMedia(producerTransport, videoTrack);
+          producers.current?.push(producer as types.Producer);
+        })();
+      }
+
+      if (audioTrack && producerTransport) {
+        (async () => {
+          const producer = await produceMedia(producerTransport, audioTrack);
+          producers.current?.push(producer as types.Producer);
+        })();
       }
     }
 
