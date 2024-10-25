@@ -28,12 +28,9 @@ const Call = ({
   const [micPermission, setMicPermission] = useState<boolean>(false);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
   const [device, setDevice] = useState<types.Device>();
-  // const producerTransport = useRef<types.Transport>();
   const [producerTransport, setProducerTransport] = useState<types.Transport>();
-  // const consumerTransport = useRef<types.Transport>();
   const [consumerTransport, setConsumerTransport] = useState<types.Transport>();
   const producers = useRef<types.Producer[]>();
-  // const consumers = useRef<types.Consumer[]>();
   const members = useSelector((state: stateType) => state.members.members);
 
   const adjustLayout = (count: number): string => {
@@ -184,17 +181,18 @@ const Call = ({
 
     producerTransport?.on("connectionstatechange", async (stat) => {
       console.log("producer Transport connection state:", stat);
-      if (stat === "failed") {
-        console.log("restarting ice----------------");
-        echoUtils.echoSocket.emit(
-          "restartIce",
-          { type: "producer" },
-          async (response: any) => {
-            await producerTransport.restartIce({
-              iceParameters: response.iceParams,
-            });
-          }
-        );
+      if (stat === "failed" || stat === "disconnected") {
+        throw new Error(`Producer Transport Connection Error ${stat}`);
+        // console.log("restarting ice----------------");
+        // echoUtils.echoSocket.emit(
+        //   "restartIce",
+        //   { type: "producer" },
+        //   async (response: any) => {
+        //     await producerTransport.restartIce({
+        //       iceParameters: response.iceParams,
+        //     });
+        //   }
+        // );
       }
     });
   }, [producerTransport, localStream]);
@@ -223,18 +221,19 @@ const Call = ({
 
     consumerTransport?.on("connectionstatechange", async (stat) => {
       console.log("consumer Transport connection state:", stat);
-      if (stat === "failed") {
-        console.log("restarting ice----------------");
-        echoUtils.echoSocket.emit(
-          "restartIce",
-          { type: "consumer" },
-          async (response: any) => {
-            await consumerTransport.restartIce({
-              iceParameters: response.iceParams,
-            });
-            console.log("ice params:", response);
-          }
-        );
+      if (stat === "failed" || stat === "disconnected") {
+        throw new Error(`Consumer Transport Connection Error ${stat}`);
+        // console.log("restarting ice----------------");
+        // echoUtils.echoSocket.emit(
+        //   "restartIce",
+        //   { type: "consumer" },
+        //   async (response: any) => {
+        //     await consumerTransport.restartIce({
+        //       iceParameters: response.iceParams,
+        //     });
+        //     console.log("ice params:", response);
+        //   }
+        // );
       }
     });
   }, [consumerTransport]);
