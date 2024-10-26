@@ -202,6 +202,14 @@ const RemoteStream = ({
     };
   }, [videoStream]);
 
+  useEffect(() => {
+    if (device) {
+      device.rtpCapabilities.codecs?.forEach((codec) => {
+        addDebug(JSON.stringify(codec.mimeType));
+      });
+    }
+  }, [device]);
+
   return (
     <div
       className={`remoteContainer${id} relative grid-item overflow-hidden  ${className}`}
