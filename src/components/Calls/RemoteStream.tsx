@@ -135,6 +135,10 @@ const RemoteStream = ({
     consumerTransport?.on("connectionstatechange", (stat) => {
       addDebug(`consumer transport connection is: ${stat}`);
     });
+
+    return () => {
+      echoUtils.echoSocket.off("incommingMedia");
+    };
   }, [consumerTransport]);
 
   //when this user joins
