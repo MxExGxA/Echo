@@ -228,7 +228,8 @@ const RemoteStream = ({
           />
         )}
       </div>
-      <audio autoPlay ref={audioRef}></audio>
+
+      <audio ref={audioRef} autoPlay></audio>
 
       {/* screen sharing */}
       <video

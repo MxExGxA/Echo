@@ -15,7 +15,7 @@ const CallPlaceholder = ({
         {memberName}
       </div>
       {audio && (
-        <Visualizer audio={audio} strokeColor="#0E38B1" autoStart>
+        <Visualizer audio={audio} strokeColor="#FFFFFF" autoStart>
           {({ canvasRef }) => (
             <canvas ref={canvasRef} className="absolute h-full w-full" />
           )}
