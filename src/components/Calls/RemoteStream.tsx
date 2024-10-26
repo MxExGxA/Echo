@@ -35,6 +35,8 @@ const RemoteStream = ({
     audio: boolean;
     video: boolean;
   }>({ audio: false, video: false });
+  const [audioStream, setAudioStream] = useState<MediaStream>();
+  const [videoStream, setVideoStream] = useState<MediaStream>();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const screenShareRef = useRef<HTMLVideoElement>(null);
@@ -111,6 +113,7 @@ const RemoteStream = ({
           if (consumer.kind === "audio") {
             const audioStream = new MediaStream();
             audioStream.addTrack(consumer.track);
+            setAudioStream(audioStream);
             audioRef.current!.srcObject = audioStream;
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
@@ -118,6 +121,7 @@ const RemoteStream = ({
           if (consumer.kind === "video") {
             const videoStream = new MediaStream();
             videoStream.addTrack(consumer.track);
+            setVideoStream(videoStream);
             if (opts.appData.trackType === "screen") {
               screenShareRef.current!.srcObject = videoStream;
             } else {
@@ -128,13 +132,16 @@ const RemoteStream = ({
         }
       }
     });
+    consumerTransport?.on("connectionstatechange", (stat) => {
+      addDebug(`consumer transport connection is: ${stat}`);
+    });
   }, [consumerTransport]);
 
   //when this user joins
   useEffect(() => {
     const producersArr = producers[id];
     if (producersArr && device && consumerTransport) {
-      producersArr.forEach(async (producer) => {
+      producersArr.map(async (producer) => {
         setMediaLoading((prev) => ({
           ...prev,
           [producer?.kind as string]: true,
@@ -147,12 +154,16 @@ const RemoteStream = ({
           consumerTransport,
           producer?.id as string
         );
-        addDebug(`${producer?.kind} consumer loaded`);
+
+        if (consumer) {
+          addDebug(`${producer?.kind} consumer loaded`);
+        }
 
         if (consumer) {
           if (consumer.kind === "audio") {
             const audioStream = new MediaStream();
             audioStream.addTrack(consumer.track);
+            setAudioStream(audioStream);
             audioRef.current!.srcObject = audioStream;
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
@@ -160,6 +171,7 @@ const RemoteStream = ({
           if (consumer.kind === "video") {
             const videoStream = new MediaStream();
             videoStream.addTrack(consumer.track);
+            setVideoStream(videoStream);
             if (producer?.appData.trackType === "screen") {
               screenShareRef.current!.srcObject = videoStream;
             } else {
@@ -168,9 +180,27 @@ const RemoteStream = ({
             setMediaLoading((prev) => ({ ...prev, video: false }));
           }
         }
+
+        addDebug("Ended!");
       });
     }
   }, [producers, device, consumerTransport]);
+
+  useEffect(() => {
+    return () => {
+      if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [audioStream]);
+
+  useEffect(() => {
+    return () => {
+      if (videoStream) {
+        videoStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [videoStream]);
 
   return (
     <div

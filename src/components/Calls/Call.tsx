@@ -51,8 +51,11 @@ const Call = ({
   };
 
   useEffect(() => {
-    //get localstream
     (async () => {
+      //create a new device
+      const device = new Device();
+
+      //get localstream
       await Promise.allSettled([getLocalAudio(), getLocalVideo()]).then(
         (results) => {
           const localMediaStream = new MediaStream();
@@ -82,8 +85,6 @@ const Call = ({
       echoUtils.echoSocket.emit(
         "getRouterRtpCapabilities",
         async (rtpCapabilities: types.RtpCapabilities) => {
-          //create a new device
-          const device = new Device();
           //load the device with rtp capabilities
           await device.load({
             routerRtpCapabilities: rtpCapabilities,
@@ -102,13 +103,8 @@ const Call = ({
   }, []);
 
   useEffect(() => {
-    return () => {
-      localStream?.getTracks().forEach((track) => track.stop());
-    };
-  }, [localStream]);
-
-  useEffect(() => {
     if (device) {
+      //create producer transport
       echoUtils.echoSocket.emit(
         "createProducerTransport",
         async (transportOptions: types.TransportOptions) => {
@@ -119,7 +115,7 @@ const Call = ({
           setProducerTransport(prodTransport);
         }
       );
-
+      //create consumer transport
       echoUtils.echoSocket.emit(
         "createConsumerTransport",
         async (transportOptions: types.TransportOptions) => {
@@ -166,48 +162,38 @@ const Call = ({
         );
       });
 
-      // const streamTracks = localStream.getTracks();
       const audioTrack = localStream.getAudioTracks()[0];
-      // const videoTrack = localStream.getVideoTracks()[0];
+      const videoTrack = localStream.getVideoTracks()[0];
 
-      // if (streamTracks) {
-      //   streamTracks.forEach(async (track) => {
-      //     if (track && producerTransport) {
-      //       const producer = await produceMedia(producerTransport, track);
-      //       producers.current?.push(producer as types.Producer);
-      //     }
-      //   });
-      // }
-
-      // if (videoTrack && producerTransport) {
-      //   (async () => {
-      //     const producer = await produceMedia(producerTransport, videoTrack);
-      //     producers.current?.push(producer as types.Producer);
-      //   })();
-      // }
-
-      if (audioTrack && producerTransport) {
+      if (audioTrack) {
         (async () => {
           const producer = await produceMedia(producerTransport, audioTrack);
           producers.current?.push(producer as types.Producer);
         })();
       }
-    }
 
-    producerTransport?.on("connectionstatechange", async (stat) => {
-      if (stat === "failed" || stat === "disconnected") {
-        console.log("restarting Producer ice");
-        echoUtils.echoSocket.emit(
-          "restartIce",
-          { type: "producer" },
-          async (response: any) => {
-            await producerTransport.restartIce({
-              iceParameters: response.iceParams,
-            });
-          }
-        );
+      if (videoTrack) {
+        (async () => {
+          const producer = await produceMedia(producerTransport, videoTrack);
+          producers.current?.push(producer as types.Producer);
+        })();
       }
-    });
+
+      producerTransport.on("connectionstatechange", async (stat) => {
+        if (stat === "failed" || stat === "disconnected") {
+          console.log("restarting Producer ice");
+          echoUtils.echoSocket.emit(
+            "restartIce",
+            { type: "producer" },
+            async (response: any) => {
+              await producerTransport.restartIce({
+                iceParameters: response.iceParams,
+              });
+            }
+          );
+        }
+      });
+    }
   }, [producerTransport, localStream]);
 
   useEffect(() => {
@@ -227,23 +213,28 @@ const Call = ({
           }
         );
       });
+      consumerTransport.on("connectionstatechange", async (stat) => {
+        if (stat === "failed" || stat === "disconnected") {
+          console.log("restarting Consumer ice..");
+          echoUtils.echoSocket.emit(
+            "restartIce",
+            { type: "consumer" },
+            async (response: any) => {
+              await consumerTransport.restartIce({
+                iceParameters: response.iceParams,
+              });
+            }
+          );
+        }
+      });
     }
-
-    consumerTransport?.on("connectionstatechange", async (stat) => {
-      if (stat === "failed" || stat === "disconnected") {
-        console.log("restarting Consumer ice..");
-        echoUtils.echoSocket.emit(
-          "restartIce",
-          { type: "consumer" },
-          async (response: any) => {
-            await consumerTransport.restartIce({
-              iceParameters: response.iceParams,
-            });
-          }
-        );
-      }
-    });
   }, [consumerTransport]);
+
+  useEffect(() => {
+    return () => {
+      localStream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [localStream]);
 
   return (
     <div
