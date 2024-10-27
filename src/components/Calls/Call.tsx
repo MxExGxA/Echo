@@ -81,21 +81,6 @@ const Call = ({
         }
       );
 
-      const pc = new RTCPeerConnection({
-        iceServers: [],
-        iceTransportPolicy: "all",
-        bundlePolicy: "max-bundle",
-        rtcpMuxPolicy: "require",
-        //@ts-ignore
-        sdpSemantics: "unified-plan",
-      });
-      pc.addTransceiver("audio");
-      pc.addTransceiver("video");
-
-      const offer = await pc.createOffer();
-
-      console.log(offer.sdp);
-
       // get router rtp capabilities from server
       echoUtils.echoSocket.emit(
         "getRouterRtpCapabilities",

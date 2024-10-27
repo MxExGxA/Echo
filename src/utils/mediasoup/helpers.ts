@@ -10,6 +10,16 @@ export const produceMedia = async (
     const producer = await transport.produce({
       track,
       appData: { trackType },
+      encodings: [
+        {
+          maxBitrate: 200_000, // Lower the max bitrate
+          scaleResolutionDownBy: 2, // Halve the resolution
+          maxFramerate: 15, // Lower the frame rate
+        },
+      ],
+      codecOptions: {
+        videoGoogleStartBitrate: 100,
+      },
     });
     return producer;
   } catch (err) {
