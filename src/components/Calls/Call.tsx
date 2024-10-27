@@ -118,7 +118,11 @@ const Call = ({
           setProducerTransport(prodTransport);
         }
       );
+    }
+  }, [device]);
 
+  useEffect(() => {
+    if (device && producerTransport) {
       //create consumer transport
       echoUtils.echoSocket.emit(
         "createConsumerTransport",
@@ -131,7 +135,7 @@ const Call = ({
         }
       );
     }
-  }, [device]);
+  }, [device, producerTransport]);
 
   useEffect(() => {
     if (producerTransport && localStream) {
