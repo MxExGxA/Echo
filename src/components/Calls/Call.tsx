@@ -81,6 +81,21 @@ const Call = ({
         }
       );
 
+      const pc = new RTCPeerConnection({
+        iceServers: [],
+        iceTransportPolicy: "all",
+        bundlePolicy: "max-bundle",
+        rtcpMuxPolicy: "require",
+        //@ts-ignore
+        sdpSemantics: "unified-plan",
+      });
+      pc.addTransceiver("audio");
+      pc.addTransceiver("video");
+
+      const offer = await pc.createOffer();
+
+      console.log(offer.sdp);
+
       // get router rtp capabilities from server
       echoUtils.echoSocket.emit(
         "getRouterRtpCapabilities",
@@ -118,11 +133,7 @@ const Call = ({
           setProducerTransport(prodTransport);
         }
       );
-    }
-  }, [device]);
 
-  useEffect(() => {
-    if (device && producerTransport) {
       //create consumer transport
       echoUtils.echoSocket.emit(
         "createConsumerTransport",
@@ -135,7 +146,7 @@ const Call = ({
         }
       );
     }
-  }, [device, producerTransport]);
+  }, [device]);
 
   useEffect(() => {
     if (producerTransport && localStream) {
@@ -204,10 +215,8 @@ const Call = ({
     }
 
     return () => {
-      if (producerTransport) {
-        producerTransport.removeAllListeners();
-        producerTransport.close();
-      }
+      producerTransport?.removeAllListeners();
+      producerTransport?.close();
     };
   }, [producerTransport, localStream]);
 
