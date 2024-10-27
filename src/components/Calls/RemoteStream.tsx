@@ -47,6 +47,8 @@ const RemoteStream = ({
   const producers = useSelector(
     (state: stateType) => state.producers.producers
   );
+
+  const [consumers, setConsumers] = useState<types.Consumer[]>([]);
   const mediaConfRef = useRef<mediaType>();
   const dispatch = useDispatch();
 
@@ -107,6 +109,7 @@ const RemoteStream = ({
           opts.producerId as string
         );
 
+        setConsumers((prev) => [...prev, consumer]);
         addDebug(`${opts?.kind} consumer loaded`);
 
         if (consumer) {
@@ -158,7 +161,7 @@ const RemoteStream = ({
           consumerTransport,
           producer?.id as string
         );
-
+        setConsumers((prev) => [...prev, consumer]);
         if (consumer) {
           addDebug(`${producer?.kind} consumer loaded`);
         }
@@ -213,6 +216,12 @@ const RemoteStream = ({
       });
     }
   }, [device]);
+
+  useEffect(() => {
+    return () => {
+      consumers?.forEach((consumer) => consumer.close());
+    };
+  }, []);
 
   return (
     <div

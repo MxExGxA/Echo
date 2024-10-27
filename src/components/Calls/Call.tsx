@@ -99,7 +99,11 @@ const Call = ({
 
       // echoUtils.echoSocket.on("memberLeft", (opts) => {});
     })();
-    return () => producers.current?.forEach((p) => p.close());
+    return () => {
+      producers.current?.forEach((p) => p.close());
+      consumerTransport?.close();
+      producerTransport?.close();
+    };
   }, []);
 
   useEffect(() => {
