@@ -270,8 +270,8 @@ const RemoteStream = ({
   useEffect(() => {
     return () => {
       consumersRef?.current.forEach((consumer) => consumer.close());
-      audioRef.current!.srcObject = null;
       audioRef.current?.remove();
+      videoRef.current?.remove();
     };
   }, []);
 
