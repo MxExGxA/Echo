@@ -48,7 +48,7 @@ const RemoteStream = ({
     (state: stateType) => state.producers.producers
   );
 
-  const [consumers, setConsumers] = useState<types.Consumer[]>([]);
+  // const [consumers, setConsumers] = useState<types.Consumer[]>([]);
   const consumersRef = useRef<types.Consumer[]>([]);
   const mediaConfRef = useRef<mediaType>();
   const dispatch = useDispatch();
@@ -130,7 +130,7 @@ const RemoteStream = ({
           opts.producerId as string
         );
 
-        setConsumers((prev) => [...prev, consumer]);
+        // setConsumers((prev) => [...prev, consumer]);
         consumersRef.current.push(consumer);
 
         addDebug(`${opts?.kind} consumer loaded`);
@@ -182,7 +182,7 @@ const RemoteStream = ({
           consumerTransport,
           producer?.id as string
         );
-        setConsumers((prev) => [...prev, consumer]);
+        // setConsumers((prev) => [...prev, consumer]);
         consumersRef.current.push(consumer);
 
         if (consumer) {
