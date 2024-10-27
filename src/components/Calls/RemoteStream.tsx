@@ -194,8 +194,6 @@ const RemoteStream = ({
             const audioStream = new MediaStream();
             audioStream.addTrack(consumer.track);
             setAudioStream(audioStream);
-            // audioRef.current!.srcObject = audioStream;
-
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
           }
@@ -215,49 +213,57 @@ const RemoteStream = ({
     }
   }, [producers, device, consumerTransport]);
 
-  useEffect(() => {
-    addDebug(consumerTransport && "consumer transport found");
+  // useEffect(() => {
+  //   addDebug(consumerTransport && "consumer transport found");
 
-    const handleAttachMedia = (state: string) => {
-      addDebug(`Consumer transport status: ${state}`);
-      if (state === "connected") {
-        if (audioRef.current && audioStream) {
-          audioRef.current.srcObject = audioStream;
-          addDebug("audio stream attached to audio player!");
-        }
-        if (videoRef.current && videoStream) {
-          videoRef.current.srcObject = videoStream;
-          addDebug("video stream attached to audio player!");
-        }
-      }
-    };
+  //   const handleAttachMedia = (state: string) => {
+  //     addDebug(`Consumer transport status: ${state}`);
+  //     if (state === "connected") {
+  //       if (audioRef.current && audioStream) {
+  //         audioRef.current.srcObject = audioStream;
+  //         addDebug("audio stream attached to audio player!");
+  //       }
+  //       if (videoRef.current && videoStream) {
+  //         videoRef.current.srcObject = videoStream;
+  //         addDebug("video stream attached to audio player!");
+  //       }
+  //     }
+  //   };
 
-    handleAttachMedia(consumerTransport?.connectionState);
+  //   handleAttachMedia(consumerTransport?.connectionState);
 
-    console.log(consumerTransport);
+  //   console.log(consumerTransport);
 
-    consumerTransport?.on("connectionstatechange", handleAttachMedia);
+  //   consumerTransport?.on("connectionstatechange", handleAttachMedia);
 
-    return () => {
-      consumerTransport?.off("connectionstatechange", handleAttachMedia);
-    };
-  }, [consumerTransport, audioStream, videoStream]);
-
-  useEffect(() => {
-    return () => {
-      if (audioStream) {
-        audioStream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [audioStream]);
+  //   return () => {
+  //     consumerTransport?.off("connectionstatechange", handleAttachMedia);
+  //   };
+  // }, [consumerTransport, audioStream, videoStream]);
 
   useEffect(() => {
+    if (audioStream) {
+      audioRef.current!.srcObject = audioStream;
+      addDebug("audio stream attached to audio player!");
+    }
     return () => {
-      if (videoStream) {
-        videoStream.getTracks().forEach((track) => track.stop());
-      }
+      audioStream?.getTracks().forEach((track) => track.stop());
+      audioRef.current?.remove();
+      setAudioStream(undefined);
     };
-  }, [videoStream]);
+  }, [audioStream, audioRef.current]);
+
+  useEffect(() => {
+    if (videoStream) {
+      videoRef.current!.srcObject = videoStream;
+      addDebug("video stream attached to audio player!");
+    }
+    return () => {
+      videoStream?.getTracks().forEach((track) => track.stop());
+      videoRef.current?.remove();
+      setVideoStream(undefined);
+    };
+  }, [videoStream, videoRef.current]);
 
   useEffect(() => {
     if (device) {
@@ -270,9 +276,6 @@ const RemoteStream = ({
   useEffect(() => {
     return () => {
       consumersRef?.current.forEach((consumer) => consumer.close());
-      audioRef.current?.remove();
-      videoRef.current?.remove();
-      screenShareRef.current?.remove();
     };
   }, []);
 
