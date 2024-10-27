@@ -57,25 +57,13 @@ const RemoteStream = ({
     dispatch(debug(text));
   };
 
-  // const handleAudioPlaying = (e: any) => {
-  //   console.log(e);
+  const handleAudioError = (e: any) => {
+    console.log(e);
+  };
 
-  //   addDebug("audio is playing");
-  // };
-
-  // const handleCanPlay = (e: any) => {
-  //   console.log(e);
-  //   addDebug("audio can play");
-  // };
-
-  // const handleAudioLoaded = (e: any) => {
-  //   console.log(e);
-  //   addDebug("audio is loaded successfully");
-  // };
-
-  // const handleAudioError = (e: any) => {
-  //   addDebug(`audio error: ${JSON.stringify(e)}`);
-  // };
+  const resumeConsumer = (id: string) => {
+    echoUtils.echoSocket.emit("resumeConsumer", { id });
+  };
 
   useEffect(() => {
     mediaSelector.forEach((media) => {
@@ -156,6 +144,8 @@ const RemoteStream = ({
             }
             setMediaLoading((prev) => ({ ...prev, video: false }));
           }
+
+          resumeConsumer(consumer.id);
         }
       }
     });
@@ -195,7 +185,6 @@ const RemoteStream = ({
             audioStream.addTrack(consumer.track);
             setAudioStream(audioStream);
             // audioRef.current!.srcObject = audioStream;
-
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
           }
@@ -203,6 +192,7 @@ const RemoteStream = ({
             const videoStream = new MediaStream();
             videoStream.addTrack(consumer.track);
             setVideoStream(videoStream);
+
             if (producer?.appData.trackType === "screen") {
               screenShareRef.current!.srcObject = videoStream;
             } else {
@@ -210,6 +200,7 @@ const RemoteStream = ({
             }
             setMediaLoading((prev) => ({ ...prev, video: false }));
           }
+          resumeConsumer(consumer.id);
         }
       });
     }
@@ -332,14 +323,7 @@ const RemoteStream = ({
         )}
       </div>
 
-      <audio
-        ref={audioRef}
-        autoPlay
-        // onPlaying={handleAudioPlaying}
-        // onCanPlay={handleCanPlay}
-        // onLoadedMetadata={handleAudioLoaded}
-        // onError={handleAudioError}
-      ></audio>
+      <audio ref={audioRef} autoPlay onError={handleAudioError}></audio>
 
       {/* screen sharing */}
       <video
