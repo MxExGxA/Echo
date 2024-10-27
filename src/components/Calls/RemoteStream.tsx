@@ -57,14 +57,18 @@ const RemoteStream = ({
   };
 
   const handleAudioPlaying = (e: any) => {
+    console.log(e);
+
     addDebug("audio is playing");
   };
 
   const handleCanPlay = (e: any) => {
+    console.log(e);
     addDebug("audio can play");
   };
 
   const handleAudioLoaded = (e: any) => {
+    console.log(e);
     addDebug("audio is loaded successfully");
   };
 
