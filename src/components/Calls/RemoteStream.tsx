@@ -248,7 +248,6 @@ const RemoteStream = ({
     }
     return () => {
       audioStream?.getTracks().forEach((track) => track.stop());
-      audioRef.current?.remove();
       setAudioStream(undefined);
     };
   }, [audioStream, audioRef.current]);
@@ -260,7 +259,6 @@ const RemoteStream = ({
     }
     return () => {
       videoStream?.getTracks().forEach((track) => track.stop());
-      videoRef.current?.remove();
       setVideoStream(undefined);
     };
   }, [videoStream, videoRef.current]);
