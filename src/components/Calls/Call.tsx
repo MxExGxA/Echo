@@ -93,6 +93,7 @@ const Call = ({
           setDevice(device);
         }
       );
+
       // echoUtils.echoSocket.on("memberJoined", async (opts) => {
       //   console.log(opts);
       // });
@@ -101,8 +102,6 @@ const Call = ({
     })();
     return () => {
       producers.current?.forEach((p) => p.close());
-      consumerTransport?.close();
-      producerTransport?.close();
     };
   }, []);
 
@@ -119,6 +118,7 @@ const Call = ({
           setProducerTransport(prodTransport);
         }
       );
+
       //create consumer transport
       echoUtils.echoSocket.emit(
         "createConsumerTransport",
@@ -198,6 +198,13 @@ const Call = ({
         }
       });
     }
+
+    return () => {
+      if (producerTransport) {
+        producerTransport.removeAllListeners();
+        producerTransport.close();
+      }
+    };
   }, [producerTransport, localStream]);
 
   useEffect(() => {
@@ -232,6 +239,11 @@ const Call = ({
         }
       });
     }
+
+    return () => {
+      consumerTransport?.removeAllListeners();
+      consumerTransport?.close();
+    };
   }, [consumerTransport]);
 
   useEffect(() => {

@@ -121,6 +121,7 @@ const RemoteStream = ({
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
           }
+
           if (consumer.kind === "video") {
             const videoStream = new MediaStream();
             videoStream.addTrack(consumer.track);
