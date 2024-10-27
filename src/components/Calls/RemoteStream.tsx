@@ -49,6 +49,7 @@ const RemoteStream = ({
   );
 
   const [consumers, setConsumers] = useState<types.Consumer[]>([]);
+  const consumersRef = useRef<types.Consumer[]>([]);
   const mediaConfRef = useRef<mediaType>();
   const dispatch = useDispatch();
 
@@ -56,25 +57,25 @@ const RemoteStream = ({
     dispatch(debug(text));
   };
 
-  const handleAudioPlaying = (e: any) => {
-    console.log(e);
+  // const handleAudioPlaying = (e: any) => {
+  //   console.log(e);
 
-    addDebug("audio is playing");
-  };
+  //   addDebug("audio is playing");
+  // };
 
-  const handleCanPlay = (e: any) => {
-    console.log(e);
-    addDebug("audio can play");
-  };
+  // const handleCanPlay = (e: any) => {
+  //   console.log(e);
+  //   addDebug("audio can play");
+  // };
 
-  const handleAudioLoaded = (e: any) => {
-    console.log(e);
-    addDebug("audio is loaded successfully");
-  };
+  // const handleAudioLoaded = (e: any) => {
+  //   console.log(e);
+  //   addDebug("audio is loaded successfully");
+  // };
 
-  const handleAudioError = (e: any) => {
-    addDebug(`audio error: ${JSON.stringify(e)}`);
-  };
+  // const handleAudioError = (e: any) => {
+  //   addDebug(`audio error: ${JSON.stringify(e)}`);
+  // };
 
   useEffect(() => {
     mediaSelector.forEach((media) => {
@@ -130,6 +131,8 @@ const RemoteStream = ({
         );
 
         setConsumers((prev) => [...prev, consumer]);
+        consumersRef.current.push(consumer);
+
         addDebug(`${opts?.kind} consumer loaded`);
 
         if (consumer) {
@@ -137,7 +140,7 @@ const RemoteStream = ({
             const audioStream = new MediaStream();
             audioStream.addTrack(consumer.track);
             setAudioStream(audioStream);
-            audioRef.current!.srcObject = audioStream;
+            // audioRef.current!.srcObject = audioStream;
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
           }
@@ -149,15 +152,12 @@ const RemoteStream = ({
             if (opts.appData.trackType === "screen") {
               screenShareRef.current!.srcObject = videoStream;
             } else {
-              videoRef.current!.srcObject = videoStream;
+              // videoRef.current!.srcObject = videoStream;
             }
             setMediaLoading((prev) => ({ ...prev, video: false }));
           }
         }
       }
-    });
-    consumerTransport?.on("connectionstatechange", (stat) => {
-      addDebug(`consumer transport connection is: ${stat}`);
     });
 
     return () => {
@@ -183,6 +183,8 @@ const RemoteStream = ({
           producer?.id as string
         );
         setConsumers((prev) => [...prev, consumer]);
+        consumersRef.current.push(consumer);
+
         if (consumer) {
           addDebug(`${producer?.kind} consumer loaded`);
         }
@@ -192,9 +194,7 @@ const RemoteStream = ({
             const audioStream = new MediaStream();
             audioStream.addTrack(consumer.track);
             setAudioStream(audioStream);
-            audioRef.current!.srcObject = audioStream;
-
-            //debugging audio player
+            // audioRef.current!.srcObject = audioStream;
 
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
@@ -206,16 +206,42 @@ const RemoteStream = ({
             if (producer?.appData.trackType === "screen") {
               screenShareRef.current!.srcObject = videoStream;
             } else {
-              videoRef.current!.srcObject = videoStream;
+              // videoRef.current!.srcObject = videoStream;
             }
             setMediaLoading((prev) => ({ ...prev, video: false }));
           }
         }
-
-        addDebug("Ended!");
       });
     }
   }, [producers, device, consumerTransport]);
+
+  useEffect(() => {
+    addDebug(consumerTransport && "consumer transport found");
+
+    const handleAttachMedia = (state: string) => {
+      addDebug(`Consumer transport status: ${state}`);
+      if (state === "connected") {
+        if (audioRef.current && audioStream) {
+          audioRef.current.srcObject = audioStream;
+          addDebug("audio stream attached to audio player!");
+        }
+        if (videoRef.current && videoStream) {
+          videoRef.current.srcObject = videoStream;
+          addDebug("video stream attached to audio player!");
+        }
+      }
+    };
+
+    handleAttachMedia(consumerTransport?.connectionState);
+
+    console.log(consumerTransport);
+
+    consumerTransport?.on("connectionstatechange", handleAttachMedia);
+
+    return () => {
+      consumerTransport?.off("connectionstatechange", handleAttachMedia);
+    };
+  }, [consumerTransport, audioStream, videoStream]);
 
   useEffect(() => {
     return () => {
@@ -243,7 +269,7 @@ const RemoteStream = ({
 
   useEffect(() => {
     return () => {
-      consumers?.forEach((consumer) => consumer.close());
+      consumersRef?.current.forEach((consumer) => consumer.close());
     };
   }, []);
 
@@ -307,10 +333,10 @@ const RemoteStream = ({
       <audio
         ref={audioRef}
         autoPlay
-        onPlaying={handleAudioPlaying}
-        onCanPlay={handleCanPlay}
-        onLoadedMetadata={handleAudioLoaded}
-        onError={handleAudioError}
+        // onPlaying={handleAudioPlaying}
+        // onCanPlay={handleCanPlay}
+        // onLoadedMetadata={handleAudioLoaded}
+        // onError={handleAudioError}
       ></audio>
 
       {/* screen sharing */}
