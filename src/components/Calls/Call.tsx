@@ -86,11 +86,15 @@ const Call = ({
         "getRouterRtpCapabilities",
         async (rtpCapabilities: types.RtpCapabilities) => {
           //load the device with rtp capabilities
-          await device.load({
-            routerRtpCapabilities: rtpCapabilities,
-          });
+          try {
+            await device.load({
+              routerRtpCapabilities: rtpCapabilities,
+            });
 
-          setDevice(device);
+            setDevice(device);
+          } catch (err) {
+            console.error("Failed to load the Device", err);
+          }
         }
       );
 
@@ -182,28 +186,43 @@ const Call = ({
           producers.current?.push(producer as types.Producer);
         })();
       }
-
-      producerTransport.on("connectionstatechange", async (stat) => {
-        if (stat === "failed" || stat === "disconnected") {
-          console.log("restarting Producer ice");
-          echoUtils.echoSocket.emit(
-            "restartIce",
-            { type: "producer" },
-            async (response: any) => {
-              await producerTransport.restartIce({
-                iceParameters: response.iceParams,
-              });
-            }
-          );
-        }
-      });
     }
 
     return () => {
+      producers.current?.forEach((producer) => producer.close());
       producerTransport?.removeAllListeners();
       producerTransport?.close();
     };
   }, [producerTransport, localStream]);
+
+  useEffect(() => {
+    const handleRestartIce = async (stat: string) => {
+      if (stat === "failed" || stat === "disconnected") {
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay for 2 seconds
+        console.log("restarting Producer ice");
+        echoUtils.echoSocket.emit(
+          "restartIce",
+          { type: "producer" },
+          async (response: any) => {
+            if (response.iceParams) {
+              await producerTransport?.restartIce({
+                iceParameters: response.iceParams,
+              });
+            } else {
+              console.log("no ice params received");
+            }
+          }
+        );
+      }
+    };
+    if (producerTransport) {
+      producerTransport.on("connectionstatechange", handleRestartIce);
+    }
+
+    return () => {
+      producerTransport?.off("connectionstatechange", handleRestartIce);
+    };
+  }, [producerTransport]);
 
   useEffect(() => {
     if (consumerTransport) {
