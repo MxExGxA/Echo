@@ -56,6 +56,22 @@ const RemoteStream = ({
     dispatch(debug(text));
   };
 
+  const handleAudioPlaying = (e: any) => {
+    addDebug("audio is playing");
+  };
+
+  const handleCanPlay = (e: any) => {
+    addDebug("audio can play");
+  };
+
+  const handleAudioLoaded = (e: any) => {
+    addDebug("audio is loaded successfully");
+  };
+
+  const handleAudioError = (e: any) => {
+    addDebug(`audio error: ${JSON.stringify(e)}`);
+  };
+
   useEffect(() => {
     mediaSelector.forEach((media) => {
       if (Object.entries(media)[0][0] === id) {
@@ -173,6 +189,9 @@ const RemoteStream = ({
             audioStream.addTrack(consumer.track);
             setAudioStream(audioStream);
             audioRef.current!.srcObject = audioStream;
+
+            //debugging audio player
+
             setAudio(audioStream);
             setMediaLoading((prev) => ({ ...prev, audio: false }));
           }
@@ -281,7 +300,14 @@ const RemoteStream = ({
         )}
       </div>
 
-      <audio ref={audioRef} autoPlay></audio>
+      <audio
+        ref={audioRef}
+        autoPlay
+        onPlaying={handleAudioPlaying}
+        onCanPlay={handleCanPlay}
+        onLoadedMetadata={handleAudioLoaded}
+        onError={handleAudioError}
+      ></audio>
 
       {/* screen sharing */}
       <video
