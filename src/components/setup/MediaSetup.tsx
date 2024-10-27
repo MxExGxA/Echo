@@ -51,29 +51,37 @@ const MediaSetup = ({
   };
 
   useEffect(() => {
-    Promise.allSettled([getLocalVideo(), getLocalAudio()]).then((results) => {
-      const videoTrack = results[0];
-      const audioTrack = results[1];
-      const localMediaStream = new MediaStream();
+    (async () => {
+      await Promise.allSettled([getLocalVideo(), getLocalAudio()]).then(
+        (results) => {
+          const videoTrack = results[0];
+          const audioTrack = results[1];
+          const localMediaStream = new MediaStream();
 
-      if (audioTrack.status === "fulfilled") {
-        localMediaStream.addTrack(audioTrack.value);
-        setMicPermission(true);
-        setToggleMic(true);
-      } else {
-        console.log("no mic permissions");
-      }
+          if (audioTrack.status === "fulfilled") {
+            localMediaStream.addTrack(audioTrack.value);
+            setMicPermission(true);
+            setToggleMic(true);
+          } else {
+            console.log("no mic permissions");
+          }
 
-      if (videoTrack.status === "fulfilled") {
-        localMediaStream.addTrack(videoTrack.value);
-        setCameraPermission(true);
-        setToggleCamera(true);
-      } else {
-        console.log("no camera permissions");
-      }
+          if (videoTrack.status === "fulfilled") {
+            localMediaStream.addTrack(videoTrack.value);
+            setCameraPermission(true);
+            setToggleCamera(true);
+          } else {
+            console.log("no camera permissions");
+          }
 
-      setLocalStream(localMediaStream);
-    });
+          setLocalStream(localMediaStream);
+        }
+      );
+    })();
+
+    return () => {
+      videoRef.current?.remove();
+    };
   }, []);
 
   useEffect(() => {
