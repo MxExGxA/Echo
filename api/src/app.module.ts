@@ -2,24 +2,18 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { GlobalFilter } from './common/filters/global.filter';
 import { AuthModule } from './auth/auth.module';
+import { JwtStrategy } from './auth/strategies/jwt.strategy';
+import { AuthGuard } from '@nestjs/passport';
+import { AppGuard } from './common/guards/app.guard';
 
 @Module({
   imports: [
     //env config
     ConfigModule.forRoot({ isGlobal: true }),
-    //jwt config
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-      }),
-      global: true,
-    }),
     //typeorm config
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -39,8 +33,8 @@ import { AuthModule } from './auth/auth.module';
   controllers: [AppController],
   providers: [
     AppService,
-    { provide: 'APP_PIPE', useClass: ValidationPipe },
-    { provide: 'APP_FILTER', useClass: GlobalFilter },
+    JwtStrategy,
+    { provide: 'APP_GUARD', useClass: AppGuard },
   ],
 })
 export class AppModule {}

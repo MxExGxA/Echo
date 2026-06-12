@@ -13,6 +13,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { User } from './entities/user.entity';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('users')
@@ -29,16 +30,14 @@ export class UsersController {
     return await this.usersService.findOne(id);
   }
 
+  @Public()
   @Post()
   async create(@Body() createUserData: CreateUserDto): Promise<User> {
     return await this.usersService.create(createUserData);
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateUserData: UpdateUserDto,
-  ): Promise<User> {
+  async update(@Param('id') id: string, @Body() updateUserData: UpdateUserDto): Promise<User> {
     return await this.usersService.update(id, updateUserData);
   }
 
